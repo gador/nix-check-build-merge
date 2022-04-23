@@ -1,25 +1,37 @@
 {
   description = "nix-check-merge flake";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+
+  inputs.flake-utils = {
+    url = "github:numtide/flake-utils";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        pythonEnv = pkgs.python3.withPackages (ps: [
-          ps.flask
-        ]);
+        pkgs = import nixpkgs { inherit system; };
+        pythonEnv =
+          pkgs.python3.withPackages (ps: with ps; [ flask pytest isort ]);
         devEnv = pkgs.mkShell {
           packages = [
             pythonEnv
 
             pkgs.black
+            pkgs.mypy
           ];
           shellHook = "";
         };
       in rec {
-        defaultPackage = devEnv;
-        devShell = devEnv;
+        packages.default = devEnv;
+        devShells.default = devEnv;
+        checks = {
+          black =
+            pkgs.runCommand "black" { buildInputs = with pkgs; [ black ]; } ''
+              mkdir $out
+              black .
+            '';
+        };
       });
 }
