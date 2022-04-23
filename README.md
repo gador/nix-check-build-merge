@@ -137,6 +137,8 @@ See the [open issues](https://github.com/gador/nix-check-build-merge/issues) for
 If you like this idea and want to help out, please consider opening a bug/feature report and list your ideas.
 In this very early stage PR's are not really useful, because all the code needs to be written, anyway.
 
+Before commiting, please run `pre-commit` to apply import sorting and black code check.
+
 Obviously later, I'll greatly appreciate any code improvements and bug mitigations ;-)
 
 1. Fork the Project
