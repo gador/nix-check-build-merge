@@ -12,14 +12,31 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        pythonEnv =
-          pkgs.python3.withPackages (ps: with ps; [ flask pytest isort ]);
+        pythonEnv = pkgs.python3.withPackages (ps:
+          with ps; [
+            flask
+            pytest
+            pytest-cov
+            pytest-mock
+            vulture
+            isort
+            flake8
+          ]);
+          pre-commit = pkgs.writeScriptBin "pre-commit"
+          ''
+          #!${pkgs.runtimeShell} 
+          echo "Sorting imports"
+          isort .
+          echo "Formatting"
+          black .
+        '';
         devEnv = pkgs.mkShell {
           packages = [
             pythonEnv
 
             pkgs.black
             pkgs.mypy
+            pre-commit
           ];
           shellHook = "";
         };
@@ -30,7 +47,7 @@
           black =
             pkgs.runCommand "black" { buildInputs = with pkgs; [ black ]; } ''
               mkdir $out
-              black .
+              black . --check
             '';
         };
       });
