@@ -15,16 +15,19 @@
         pythonEnv = pkgs.python3.withPackages (ps:
           with ps; [
             flask
+
+            #test and formatting
             pytest
             pytest-cov
             pytest-mock
             vulture
             isort
             flake8
+            mypy
+            vulture
           ]);
-          pre-commit = pkgs.writeScriptBin "pre-commit"
-          ''
-          #!${pkgs.runtimeShell} 
+        pre-commit = pkgs.writeScriptBin "pre-commit" ''
+          #!${pkgs.runtimeShell}
           echo "Sorting imports"
           isort .
           echo "Formatting"
@@ -44,11 +47,25 @@
         packages.default = devEnv;
         devShells.default = devEnv;
         checks = {
-          black =
-            pkgs.runCommand "black" { buildInputs = with pkgs; [ black ]; } ''
-              mkdir $out
-              black . --check
-            '';
+          format = pkgs.runCommand "name" {
+            buildInputs = with pkgs; [
+              black
+              python3Packages.flake8
+              python3Packages.vulture
+            ];
+          } ''
+            mkdir $out
+            black . --check
+            flake8
+            vulture .
+          '';
+          pytest = pkgs.runCommand "name" {
+            buildInputs = with pkgs.python3Packages; [ pytest pytest-mock ];
+          } ''
+            mkdir $out
+            # add later
+            # pytest
+          '';
         };
       });
 }
