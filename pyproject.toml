@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=50"]
+build-backend = "setuptools.build_meta"
+
 [tool.black]
 exclude = ".git|.hg|.mypy_cache|.nox|.tox|.venv|_build|buck-out|build|dist"
 line-length = 110
