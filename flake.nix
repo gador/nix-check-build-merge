@@ -72,7 +72,7 @@
           } ''
             mkdir $out
             black ${./src} --check
-            flake8 ${./src}
+            flake8 --config ${./setup.cfg} ${./src}
             vulture ${./src} 
           '';
           pytest = pkgs.runCommand "pytest" {
