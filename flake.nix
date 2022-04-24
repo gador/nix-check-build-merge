@@ -28,9 +28,9 @@
         pre-commit = pkgs.writeScriptBin "pre-commit" ''
           #!${pkgs.runtimeShell}
           echo "Sorting imports"
-          isort .
+          isort src
           echo "Formatting"
-          black .
+          black src
         '';
         devEnv = pkgs.mkShell {
           packages = [
@@ -63,7 +63,7 @@
         packages.default = package;
         devShells.default = devEnv;
         checks = {
-          format = pkgs.runCommand "name" {
+          format = pkgs.runCommand "format" {
             buildInputs = with pkgs; [
               black
               python3Packages.flake8
@@ -71,16 +71,16 @@
             ];
           } ''
             mkdir $out
-            black . --check
-            flake8
-            vulture .
+            black ${./src} --check
+            flake8 ${./src}
+            vulture ${./src} 
           '';
-          pytest = pkgs.runCommand "name" {
+          pytest = pkgs.runCommand "pytest" {
             buildInputs = with pkgs.python3Packages; [ pytest pytest-mock ];
           } ''
             mkdir $out
             # add later
-            # pytest
+            # pytest ${./src}
           '';
         };
       });
