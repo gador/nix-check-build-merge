@@ -37,3 +37,4 @@ docs/_build/
 dmypy.json
 
 *egg-info/
+dist/
