@@ -28,9 +28,9 @@
         pre-commit = pkgs.writeScriptBin "pre-commit" ''
           #!${pkgs.runtimeShell}
           echo "Sorting imports"
-          isort src
+          isort src/nix-cbm
           echo "Formatting"
-          black src
+          black src/nix-cbm/*
         '';
         devEnv = pkgs.mkShell {
           packages = [
@@ -39,6 +39,8 @@
 
             pkgs.black
             pkgs.mypy
+            pkgs.git
+            pkgs.ripgrep
             pre-commit
           ];
           shellHook = ''
