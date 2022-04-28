@@ -1,3 +1,5 @@
+import logging
+import os
 from shutil import which
 
 
@@ -17,18 +19,25 @@ def check_tools() -> list[str]:
     OUTPUT: Missing packages, List of str.
     """
     missing_programs = []
-    programs_to_check = ["rg" "git" "nix"]
+    programs_to_check = ["rg", "git", "nix"]
     for program in programs_to_check:
         if not _exists(program):
             missing_programs.append(program)
     return missing_programs
 
 
-# TODO; add function
-def check_nixpkgs_dir():
+def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     """
     Checks, whether we are in a nixpkgs repo dir.
     INPUT: None
     OUTPUT: ok, bool.
     """
-    return True
+    # checks for two things:
+    # 1) .git dir present
+    # 2) default.nix present
+    if os.path.exists((os.path.join(nixpkgs_path, ".git"))) and os.path.exists(
+        os.path.join(nixpkgs_path, "default.nix")
+    ):
+        return True
+    logging.error(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
+    exit(1)
