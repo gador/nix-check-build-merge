@@ -54,7 +54,7 @@
         };
         package = pkgs.python3Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
-          version = "0.0.1";
+          version = "0.0.2";
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python3Packages; [ flask build click pkgs.git ];
