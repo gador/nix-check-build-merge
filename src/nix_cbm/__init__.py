@@ -4,8 +4,9 @@ import subprocess
 import sys
 import tempfile
 
-import checks
-import git
+import click
+
+from nix_cbm import checks, git
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -27,14 +28,22 @@ def _preflight(nixpkgs_path: str) -> bool:
 
 def main() -> None:
     # TODO add CLI and API interface
-    nixpkgs_dir = "/home/wogan/software/git/nixpkgs"
-    maintainer = "gador"
+    cli()
 
-    if not _preflight(nixpkgs_dir):
+
+@click.command()
+@click.option("--nixpkgs", default=".", help="path to nixpkgs")
+@click.argument("maintainer")
+def cli(nixpkgs, maintainer):
+    """
+    CLI interface for nix-check-build-merge
+    """
+
+    if not _preflight(nixpkgs):
         exit(1)
 
     nixcbm = NixCbm()
-    nixcbm.nixpkgs_repo = nixpkgs_dir
+    nixcbm.nixpkgs_repo = nixpkgs
     nixcbm.find_maintainer(maintainer)
     logging.info(str(nixcbm.maintained_packages))
 
