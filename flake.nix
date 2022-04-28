@@ -12,7 +12,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ flask build ]);
+        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ flask build click ]);
         pythonCheckEnv = pkgs.python3.withPackages (ps:
           with ps; [
             #test and formatting
@@ -28,9 +28,9 @@
         pre-commit = pkgs.writeScriptBin "pre-commit" ''
           #!${pkgs.runtimeShell}
           echo "Sorting imports"
-          isort src/nix-cbm
+          isort src/nix_cbm
           echo "Formatting"
-          black src/nix-cbm/*
+          black src/nix_cbm/*
         '';
         devEnv = pkgs.mkShell {
           packages = [
@@ -57,9 +57,9 @@
           version = "0.0.1";
           src = ./.;
 
-          propagatedBuildInputs = with pkgs.python3Packages; [ flask build ];
+          propagatedBuildInputs = with pkgs.python3Packages; [ flask build click pkgs.git ];
 
-          checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
+          #checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
         };
       in rec {
         packages.default = package;

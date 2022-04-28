@@ -35,9 +35,11 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     # checks for two things:
     # 1) .git dir present
     # 2) default.nix present
-    if os.path.exists((os.path.join(nixpkgs_path, ".git"))) and os.path.exists(
-        os.path.join(nixpkgs_path, "default.nix")
-    ):
+    # 3) .version present
+    git_dir = os.path.exists(os.path.join(nixpkgs_path, ".git"))
+    default_nix = os.path.exists(os.path.join(nixpkgs_path, "default.nix"))
+    version = os.path.exists(os.path.join(nixpkgs_path, ".version"))
+    if git_dir and default_nix and version:
         return True
     logging.error(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
     exit(1)

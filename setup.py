@@ -23,4 +23,11 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.7",
+    include_package_data=True,
+    package_data={'': ['*.nix']},
+    entry_points={
+        'console_scripts': [
+            'nixcbm = nix_cbm:main',
+        ],
+    },
 )
