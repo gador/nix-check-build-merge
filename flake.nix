@@ -47,7 +47,7 @@
             # Tells pip to put packages into $PIP_PREFIX instead of the usual locations.
             # See https://pip.pypa.io/en/stable/user_guide/#environment-variables.
             export PIP_PREFIX=$(pwd)/_build/pip_packages
-            export PYTHONPATH="$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
+            export PYTHONPATH="${./src}:$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
             export PATH="$PIP_PREFIX/bin:$PATH"
             unset SOURCE_DATE_EPOCH
           '';
@@ -58,8 +58,7 @@
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python3Packages; [ flask build click pkgs.git ];
-
-          #checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
+          checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
         };
       in rec {
         packages.default = package;
@@ -78,11 +77,13 @@
             vulture ${./src} 
           '';
           pytest = pkgs.runCommand "pytest" {
-            buildInputs = with pkgs.python3Packages; [ pytest pytest-mock ];
+            buildInputs = with pkgs.python3Packages; [ pytest pytest-mock click flask ];
           } ''
             mkdir $out
-            # add later
-            # pytest ${./src}
+            # this adds the package to sys.path of python
+            # so pytest can find and import it
+            export PYTHONPATH="${./src}:$PYTHONPATH"
+            python -m pytest ${./.}
           '';
         };
       });
