@@ -20,5 +20,6 @@ class CheckTestCase(unittest.TestCase):
     def test_check_nixpkgs_dir(self):
         self.assertRaises(LookupError)
 
+
 if __name__ == '__main__':
     unittest.main()
