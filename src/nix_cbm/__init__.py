@@ -1,7 +1,6 @@
 import logging
 import os
 import subprocess
-import sys
 import tempfile
 
 import click
@@ -20,7 +19,9 @@ def _preflight(nixpkgs_path: str) -> bool:
     logging.debug("running preflight checklist")
     missing_programs = checks.check_tools()
     if missing_programs:
-        sys.exit("The following programs are missing: " + str(missing_programs))
+        raise LookupError(
+            f"The following programs are missing: + ${str(missing_programs)}"
+        )
     checks.check_nixpkgs_dir(nixpkgs_path)
     git.git_checkout("testcommit")
     return True
@@ -38,10 +39,7 @@ def cli(nixpkgs, maintainer):
     """
     CLI interface for nix-check-build-merge
     """
-
-    if not _preflight(nixpkgs):
-        exit(1)
-
+    _preflight(nixpkgs)
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = nixpkgs
     nixcbm.find_maintainer(maintainer)
@@ -59,7 +57,7 @@ class NixCbm:
 
     def find_maintainer(self, maintainer: str):
         """ "
-        find all occurances of a given maintainer
+        find all occurrences of a given maintainer
         INPUT: maintainer, string.
         OUTPUT: package names, List of strings.
         """
