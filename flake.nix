@@ -12,7 +12,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ flask build click ]);
+        pythonEnv =
+          pkgs.python3.withPackages (ps: with ps; [ flask build click ]);
         pythonCheckEnv = pkgs.python3.withPackages (ps:
           with ps; [
             #test and formatting
@@ -30,7 +31,7 @@
           echo "Sorting imports"
           isort src/nix_cbm
           echo "Formatting"
-          black src/nix_cbm/*
+          black src/nix_cbm/* -l 90
         '';
         devEnv = pkgs.mkShell {
           packages = [
@@ -47,7 +48,9 @@
             # Tells pip to put packages into $PIP_PREFIX instead of the usual locations.
             # See https://pip.pypa.io/en/stable/user_guide/#environment-variables.
             export PIP_PREFIX=$(pwd)/_build/pip_packages
-            export PYTHONPATH="${./src}:$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
+            export PYTHONPATH="${
+              ./src
+            }:$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
             export PATH="$PIP_PREFIX/bin:$PATH"
             unset SOURCE_DATE_EPOCH
           '';
@@ -57,7 +60,12 @@
           version = "0.0.2";
           src = ./.;
 
-          propagatedBuildInputs = with pkgs.python3Packages; [ flask build click pkgs.git ];
+          propagatedBuildInputs = with pkgs.python3Packages; [
+            flask
+            build
+            click
+            pkgs.git
+          ];
           checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
         };
       in rec {
@@ -72,18 +80,28 @@
             ];
           } ''
             mkdir $out
-            black ${./src} --check
+            black ${./src} --check --diff --color -l 90
             flake8 --config ${./setup.cfg} ${./src}
             vulture ${./src} 
           '';
           pytest = pkgs.runCommand "pytest" {
-            buildInputs = with pkgs.python3Packages; [ pytest pytest-mock click flask ];
+            buildInputs = with pkgs.python3Packages; [
+              pytest
+              pytest-mock
+              pytest-cov
+              pytest-xdist
+              click
+              flask
+            ];
           } ''
             mkdir $out
             # this adds the package to sys.path of python
             # so pytest can find and import it
             export PYTHONPATH="${./src}:$PYTHONPATH"
-            python -m pytest ${./.}
+            # don't use cache dir, since it is read only with nix
+            python -m pytest ${
+              ./.
+            } -p no:cacheprovider -n auto --cov nix_cbm --cov-report term-missing
           '';
         };
       });
