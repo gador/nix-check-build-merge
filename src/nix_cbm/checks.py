@@ -12,14 +12,13 @@ def _exists(name: str) -> str:
     return which(name) is not None
 
 
-def check_tools() -> list[str]:
+def check_tools(programs_to_check=["rg", "git", "nix"]) -> list[str]:
     """
     Check for all needed programs.
-    INPUT: None
+    INPUT: programs to check, List of str.
     OUTPUT: Missing packages, List of str.
     """
     missing_programs = []
-    programs_to_check = ["rg", "git", "nix"]
     for program in programs_to_check:
         if not _exists(program):
             missing_programs.append(program)
@@ -42,4 +41,4 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     if git_dir and default_nix and version:
         return True
     logging.error(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
-    exit(1)
+    raise LookupError("Not a nixpkgs repository")
