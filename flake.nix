@@ -13,7 +13,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         pythonEnv =
-          pkgs.python3.withPackages (ps: with ps; [ flask build click ]);
+          pkgs.python3.withPackages (ps: with ps; [ flask build click sphinx ]);
         pythonCheckEnv = pkgs.python3.withPackages (ps:
           with ps; [
             #test and formatting
