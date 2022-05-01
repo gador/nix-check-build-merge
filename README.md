@@ -78,7 +78,7 @@ In later stages it is planed to also help review new PR's, hopefully in a more a
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Currently this is project is just in the draft phase. If you really want to take look arround, clone this repo and run 
+Currently, this is project is just in the draft phase. If you really want to take look around, clone this repo and run 
 ```sh
 nix develop .
 ```
@@ -88,9 +88,14 @@ nix-shell
 ```
 if not.
 
+Alternatively, you can build and run it locally with
+```sh
+nix build github:gador/nix-check-build-merge
+```
+
 ### Prerequisites
 
-Currently this project was only tested and build on NixOS. If you have nix, it should also work.
+Currently, this project was only tested and build on NixOS. If you have nix, it should also work.
 
 ### Installation
 
@@ -111,7 +116,11 @@ Currently this project was only tested and build on NixOS. If you have nix, it s
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-There is no usage yet.
+To display all maintained packages by a given user, issue:
+```shell
+nixcbm MAINTAINER --nixpkgs NIXPKGS_PATH
+```
+where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -123,8 +132,23 @@ There is no usage yet.
 - [ ] Backend
   - [ ] Automatically list all packages with a given name
   - [ ] Build the packages locally (maybe even periodically) 
+  - [ ] git fetch current nixpkgs master
+  - [ ] hydra-check the packages maintained
+  - [ ] Add a sqlite backend to save the hydra-status and the local build status
+    - [ ] Save build and hydra status along with the commit
+  - [ ] Add a GitHub API access to list open PRs (with the usual filter criteria for reviewing PRs)
+  - [ ] List top ten PRs which are ready to be reviewed
+  - [ ] Add an option to build those PRs locally (like nixpkgs-review)
+  - [ ] Add a way to post the result, comment, approve and/or merge PRs (like nixpkgs-review)
 - [ ] Frontend 
+    - [ ] Add a simple (flask?) web frontend with a static hello page
+    - [ ] Add a list of maintained packages, along with a date and a commit of nixpkgs
+    - [ ] Add a column with build status locally, as well as hydra
+    - [ ] Add a link to the local build log and the hydra online log
     - [ ] List maintained packages with either green, yellow or red badge
+    - [ ] List PRs ready to be reviewed, with links to them
+    - [ ] Add an option to build them locally
+    - [ ] Link the build log and add a badge for the build status
 
 See the [open issues](https://github.com/gador/nix-check-build-merge/issues) for a full list of proposed features (and known issues).
 
@@ -135,9 +159,9 @@ See the [open issues](https://github.com/gador/nix-check-build-merge/issues) for
 ## Contributing
 
 If you like this idea and want to help out, please consider opening a bug/feature report and list your ideas.
-In this very early stage PR's are not really useful, because all the code needs to be written, anyway.
+In this very early stage PRs are not really useful, because all the code needs to be written, anyway.
 
-Before commiting, please run `pre-commit` to apply import sorting and black code check.
+Before committing, please run `pre-commit` to apply import sorting and black code check.
 
 Obviously later, I'll greatly appreciate any code improvements and bug mitigations ;-)
 
