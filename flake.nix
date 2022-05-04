@@ -11,11 +11,15 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        venvDir = "./.venv";
         pkgs = import nixpkgs { inherit system; };
-        pythonEnv =
-          pkgs.python3.withPackages (ps: with ps; [ flask build click sphinx ]);
-        pythonCheckEnv = pkgs.python3.withPackages (ps:
+        pythonEnv = pkgs.python3.withPackages (ps:
           with ps; [
+            flask
+            build
+            click
+            sphinx
+            
             #test and formatting
             pytest
             pytest-cov
@@ -34,9 +38,9 @@
           black src/nix_cbm/* -l 90
         '';
         devEnv = pkgs.mkShell {
+          inherit venvDir;
           packages = [
             pythonEnv
-            pythonCheckEnv
 
             pkgs.black
             pkgs.mypy
@@ -45,14 +49,20 @@
             pre-commit
           ];
           shellHook = ''
-            # Tells pip to put packages into $PIP_PREFIX instead of the usual locations.
-            # See https://pip.pypa.io/en/stable/user_guide/#environment-variables.
-            export PIP_PREFIX=$(pwd)/_build/pip_packages
+            # make the locally developed package generally available
             export PYTHONPATH="${
               ./src
-            }:$PIP_PREFIX/${pkgs.python3.sitePackages}:$PYTHONPATH"
-            export PATH="$PIP_PREFIX/bin:$PATH"
-            unset SOURCE_DATE_EPOCH
+            }:$PYTHONPATH"
+
+            # setup local venv dir for IDEs
+            if [ -d "${venvDir}" ]; then
+                echo "Skipping venv creation, '${venvDir}' already exists"
+            else
+                echo "Creating new venv environment in path: '${venvDir}'"
+            python -m venv "${venvDir}"
+            fi
+            ln -sf ${pythonEnv}/lib/python3.9/site-packages/* ${venvDir}/lib/python3.9/site-packages
+            source "${venvDir}/bin/activate"
           '';
         };
         package = pkgs.python3Packages.buildPythonApplication rec {
