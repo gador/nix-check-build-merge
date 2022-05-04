@@ -12,7 +12,9 @@ def _exists(name: str) -> str:
     return which(name) is not None
 
 
-def check_tools(programs_to_check=["rg", "git", "nix"]) -> list[str]:
+def check_tools(
+    programs_to_check: list[str] = ["rg", "git", "nix", "hydra-check"]
+) -> list[str]:
     """
     Check for all needed programs.
     INPUT: programs to check, List of str.

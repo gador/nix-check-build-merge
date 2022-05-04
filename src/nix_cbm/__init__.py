@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -28,6 +29,11 @@ def _preflight(nixpkgs_path: str) -> bool:
     return True
 
 
+def _get_build_status_from_json(package_json: dict):
+    # the 0 implies the most recent build
+    return package_json[0]["success"]
+
+
 def main() -> None:
     # TODO add CLI and API interface
     cli()
@@ -44,7 +50,22 @@ def cli(nixpkgs, maintainer):
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = nixpkgs
     nixcbm.find_maintained_packages(maintainer)
-    logging.info(str(nixcbm.maintained_packages))
+    nixcbm.check_hydra_status(nixcbm.maintained_packages)
+
+    # just a stub/demonstration of the current packages
+    # TODO: Add a frontend to display them nicely
+    for package, hydra_output in nixcbm.hydra_build_status.items():
+        result = _get_build_status_from_json(hydra_output[package])
+        if result:
+            print(f"{package} built successfully on hydra")
+        elif hydra_output[package][0]["evals"]:
+            print(
+                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
+            )
+        elif hydra_output[package][0]["status"] == "Cancelled":
+            print(f"Package {package} was cancelled")
+        else:
+            print(f"Package {package} failed due to an eval failure")
 
 
 class NixCbm:
@@ -55,6 +76,7 @@ class NixCbm:
     def __init__(self):
         self.nixpkgs_repo = ""
         self.maintained_packages = []
+        self.hydra_build_status = {}
 
     def find_maintained_packages(self, maintainer: str):
         """ "
@@ -78,11 +100,36 @@ class NixCbm:
             subprocess.run(cmd, stdout=tmp, check=True)
             tmp.flush()
             with open(tmp.name) as f:
-                stdout = f.read()
+                # remove trailing newline at the end
+                stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
 
-    def check_hydra_status(self, packages: list):
+    def check_hydra_status(self, packages: list[str]):
+        """
+        Check the hydra build status of a set of packages
+        Parameters
+        ----------
+        packages: list[str]
+            a list of packages to check
+        """
         logging.info("Will now look for hydra build failures")
+        arch = "x86_64-linux"
+        for package in packages:
+            cmd = [
+                "hydra-check",
+                package,
+                "--channel",
+                "master",
+                "--arch=" + arch,
+                "--json",
+            ]
+            result = subprocess.run(cmd, capture_output=True, check=True)
+            # JSON format
+            # {'icon': '✔', 'success': True, 'status': 'Succeeded',
+            # 'timestamp': '2020-02-19T09:45:37Z', 'build_id': '113137688',
+            # 'build_url': 'https://hydra.nixos.org/build/113137688',
+            # 'name': 'pgadmin3-1.22.2', 'arch': 'x86_64-linux', 'evals': True}
+            self.hydra_build_status[package] = json.loads(result.stdout)
 
 
 if __name__ == "__main__":

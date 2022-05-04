@@ -46,6 +46,7 @@
             pkgs.mypy
             pkgs.git
             pkgs.ripgrep
+            pkgs.hydra-check
             pre-commit
           ];
           shellHook = ''
@@ -75,6 +76,7 @@
             build
             click
             pkgs.git
+            pkgs.hydra-check
           ];
           checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
         };
