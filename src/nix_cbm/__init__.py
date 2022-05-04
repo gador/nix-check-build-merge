@@ -56,7 +56,7 @@ class NixCbm:
         self.maintained_packages = []
 
     def find_maintained_packages(self, maintainer: str):
-        """"
+        """ "
         find all occurrences of a given maintainer
         INPUT: maintainer, string.
         OUTPUT: package names, List of strings.
