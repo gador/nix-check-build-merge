@@ -23,7 +23,8 @@ def _preflight(nixpkgs_path: str) -> bool:
             f"The following programs are missing: + ${str(missing_programs)}"
         )
     checks.check_nixpkgs_dir(nixpkgs_path)
-    git.git_checkout("testcommit")
+    git.git_pull(nixpkgs_path)
+    git.git_checkout(nixpkgs_path)
     return True
 
 
@@ -72,8 +73,7 @@ class NixCbm:
             "-I",
             "nixpkgs=" + self.nixpkgs_repo,
         ]
-        # stdout = subprocess.run(cmd, check=True).stdout()
-        # self.maintained_packages =
+
         with tempfile.NamedTemporaryFile(mode="w") as tmp:
             subprocess.run(cmd, stdout=tmp, check=True)
             tmp.flush()
@@ -81,11 +81,13 @@ class NixCbm:
                 stdout = f.read()
                 self.maintained_packages = stdout.split(",")
 
+    def check_hydra_status(self, packages: list):
+        logging.info("Will now look for hydra build failures")
+
 
 if __name__ == "__main__":
     main()
 
 # functionality to implement
-# 1) check, whether we are in nixpkgs local repo
 # 2) git fetch current master
 # 3) search all packages for a given maintainer
