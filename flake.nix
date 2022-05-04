@@ -80,6 +80,10 @@
         };
       in rec {
         packages.default = package;
+        apps.default = {
+          type = "app";
+          program = "${package}/bin/nixcbm";
+        };
         devShells.default = devEnv;
         checks = {
           format = pkgs.runCommand "format" {
