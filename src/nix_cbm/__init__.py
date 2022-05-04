@@ -42,7 +42,7 @@ def cli(nixpkgs, maintainer):
     _preflight(nixpkgs)
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = nixpkgs
-    nixcbm.find_maintainer(maintainer)
+    nixcbm.find_maintained_packages(maintainer)
     logging.info(str(nixcbm.maintained_packages))
 
 
@@ -55,8 +55,8 @@ class NixCbm:
         self.nixpkgs_repo = ""
         self.maintained_packages = []
 
-    def find_maintainer(self, maintainer: str):
-        """ "
+    def find_maintained_packages(self, maintainer: str):
+        """"
         find all occurrences of a given maintainer
         INPUT: maintainer, string.
         OUTPUT: package names, List of strings.

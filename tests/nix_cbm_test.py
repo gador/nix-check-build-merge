@@ -30,7 +30,7 @@ class MyTestCase(unittest.TestCase):
 
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
-        NixCbm().find_maintainer(maintainer="test_maintainer")
+        NixCbm().find_maintained_packages(maintainer="test_maintainer")
         mock_subprocess.assert_called_once()
 
     @mock.patch("nix_cbm.cli")
