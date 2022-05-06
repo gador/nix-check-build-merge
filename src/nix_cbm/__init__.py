@@ -6,8 +6,8 @@ import tempfile
 
 import click
 
-from nix_cbm import checks, frontend, git
 from nix_cbm import models  # noqa: F401
+from nix_cbm import checks, frontend, git
 from nix_cbm.config import Config
 
 logging.basicConfig(level=logging.DEBUG)
