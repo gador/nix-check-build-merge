@@ -16,6 +16,8 @@
         pythonEnv = pkgs.python3.withPackages (ps:
           with ps; [
             flask
+            flask_sqlalchemy
+            flask_migrate
             build
             click
             sphinx
@@ -42,6 +44,7 @@
           packages = [
             pythonEnv
 
+            pkgs.sqlite-utils
             pkgs.black
             pkgs.mypy
             pkgs.git
@@ -73,11 +76,16 @@
 
           propagatedBuildInputs = with pkgs.python3Packages; [
             flask
+            flask_sqlalchemy
+            flask_migrate
             build
             click
             pkgs.git
             pkgs.hydra-check
           ];
+          preCheck = ''
+            export HOME=$TMPDIR
+          '';
           checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
         };
       in rec {
@@ -98,7 +106,8 @@
             mkdir $out
             black ${./src} --check --diff --color -l 90
             flake8 --config ${./setup.cfg} ${./src}
-            vulture --ignore-decorators "@app*" ${./src}
+            # need to exclude automatic generated files
+            vulture --ignore-decorators "@app*" --exclude migrations,models --ignore-names "SQLALCHEMY*","migrate" ${./src}
           '';
           pytest = pkgs.runCommand "pytest" {
             buildInputs = with pkgs.python3Packages; [
@@ -108,12 +117,16 @@
               pytest-xdist
               click
               flask
+              flask_sqlalchemy
+              flask_migrate
             ];
           } ''
             mkdir $out
             # this adds the package to sys.path of python
             # so pytest can find and import it
             export PYTHONPATH="${./src}:$PYTHONPATH"
+            # need a home for db file
+            export HOME=$TMPDIR
             # don't use cache dir, since it is read only with nix
             python -m pytest ${
               ./.

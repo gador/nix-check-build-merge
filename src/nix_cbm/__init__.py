@@ -7,6 +7,8 @@ import tempfile
 import click
 
 from nix_cbm import checks, frontend, git
+from nix_cbm import models  # noqa: F401
+from nix_cbm.config import Config
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -73,6 +75,7 @@ def cli(nixpkgs, maintainer, action):
     elif action == "frontend":
         _preflight(nixpkgs)
         logging.info("Loading frontend")
+        logging.debug(f"sqlite db is at {Config.SQLALCHEMY_DATABASE_URI}")
         frontend.app.run(debug=True)
     else:
         raise KeyError("Please enter either frontend or maintainer")
