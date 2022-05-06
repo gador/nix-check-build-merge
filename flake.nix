@@ -107,7 +107,7 @@
             black ${./src} --check --diff --color -l 90
             flake8 --config ${./setup.cfg} ${./src}
             # need to exclude automatic generated files
-            vulture --ignore-decorators "@app*" --exclude migrations,models --ignore-names "SQLALCHEMY*","migrate" ${./src}
+            vulture --min-confidence 70 --ignore-names "revision" ${./src}
           '';
           pytest = pkgs.runCommand "pytest" {
             buildInputs = with pkgs.python3Packages; [

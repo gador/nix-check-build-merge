@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -6,8 +7,7 @@ import tempfile
 
 import click
 
-from nix_cbm import models  # noqa: F401
-from nix_cbm import checks, frontend, git
+from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
 
 logging.basicConfig(level=logging.DEBUG)
@@ -36,6 +36,36 @@ def _get_build_status_from_json(package_json: dict):
     return package_json[0]["success"]
 
 
+def _insert_or_update(package: str, result: bool, hydra_output: dict):
+    try:
+        timestamp = str(hydra_output[package][0]["timestamp"])
+        timestamp = timestamp.replace("Z", "+00:00")
+        timestamp = datetime.datetime.fromisoformat(timestamp)
+    except KeyError:
+        timestamp = None
+
+    try:
+        build_url = hydra_output[package][0]["build_url"]
+    except KeyError:
+        build_url = None
+
+    current_package = models.Packages.query.filter_by(name=package).first()
+    if not current_package:
+        # package doesn't exist yet
+        db_entry = models.Packages(
+            name=package,
+            hydra_status=result,
+            build_url=build_url,
+            timestamp=timestamp,
+        )
+        frontend.db.session.add(db_entry)
+    else:
+        current_package.hydra_status = result
+        current_package.build_url = build_url
+        current_package.timestamp = timestamp
+    frontend.db.session.commit()
+
+
 def main() -> None:
     # TODO add CLI and API interface
     cli()
@@ -62,6 +92,7 @@ def cli(nixpkgs, maintainer, action):
         # TODO: Add a frontend to display them nicely
         for package, hydra_output in nixcbm.hydra_build_status.items():
             result = _get_build_status_from_json(hydra_output[package])
+            _insert_or_update(package=package, result=result, hydra_output=hydra_output)
             if result:
                 print(f"{package} built successfully on hydra")
             elif hydra_output[package][0]["evals"]:
