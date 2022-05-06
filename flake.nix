@@ -98,7 +98,7 @@
             mkdir $out
             black ${./src} --check --diff --color -l 90
             flake8 --config ${./setup.cfg} ${./src}
-            vulture ${./src} 
+            vulture --ignore-decorators "@app*" ${./src}
           '';
           pytest = pkgs.runCommand "pytest" {
             buildInputs = with pkgs.python3Packages; [

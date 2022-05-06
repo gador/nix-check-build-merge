@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="description" content=""/>
+        <title>Nix Check Build Merge</title>
+        <!-- Bootstrap core CSS -->
+        <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet"/>
+        <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+        <!-- Custom styles for this template -->
+        <link href="{{ url_for('static', filename='index.css') }}" rel="stylesheet"/>
+    </head>
+    <body>
+        <div class="col-lg-8 mx-auto p-3 py-md-5">
+            <header class="d-flex align-items-center pb-3 mb-5 border-bottom">
+                <a href="#" class="d-flex align-items-center text-dark text-decoration-none"> <span class="fs-4">Nix Check Build Merge</span> </a>
+            </header>
+            <main>
+                <h1>Nix Check Build Merge</h1>
+                <p class="fs-5 col-md-8">Packages built by {{ maintainer }}</p>
+                <div class="mb-5">
+                    <form method="post" action="/">
+                        <input type="submit" value="Check for Maintainer" name="check" class="btn btn-primary"/>
+                    </form>
+                </div>
+            </main>
+            <footer class="pt-5 my-5 text-muted border-top"><a href="https://github.com/gador/nix-check-build-merge" target="_blank">Nix Check Build Merge on GitHub</a>
+            </footer>
+        </div>
+        <script type="text/javascript" src="{{ url_for('static', filename='popper.min.js') }}"></script>
+        <script type="text/javascript" src="assets/js/popper.min.js"></script>
+        <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    </body>
+</html>

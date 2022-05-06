@@ -6,7 +6,7 @@ import tempfile
 
 import click
 
-from nix_cbm import checks, git
+from nix_cbm import checks, frontend, git
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,31 +41,41 @@ def main() -> None:
 
 @click.command()
 @click.option("--nixpkgs", default=".", help="path to nixpkgs")
-@click.argument("maintainer")
-def cli(nixpkgs, maintainer):
+@click.option("--maintainer", help="maintainer to look for")
+@click.argument("action")
+def cli(nixpkgs, maintainer, action):
     """
-    CLI interface for nix-check-build-merge
+    CLI interface for nix-check-build-merge.\n
+    Use "maintainer" for checking the build status for all packages belonging to "maintainer"\n
+    Use "frontend" to test the frontend
     """
-    _preflight(nixpkgs)
-    nixcbm = NixCbm()
-    nixcbm.nixpkgs_repo = nixpkgs
-    nixcbm.find_maintained_packages(maintainer)
-    nixcbm.check_hydra_status(nixcbm.maintained_packages)
+    if action == "maintainer":
+        _preflight(nixpkgs)
+        nixcbm = NixCbm()
+        nixcbm.nixpkgs_repo = nixpkgs
+        nixcbm.find_maintained_packages(maintainer)
+        nixcbm.check_hydra_status(nixcbm.maintained_packages)
 
-    # just a stub/demonstration of the current packages
-    # TODO: Add a frontend to display them nicely
-    for package, hydra_output in nixcbm.hydra_build_status.items():
-        result = _get_build_status_from_json(hydra_output[package])
-        if result:
-            print(f"{package} built successfully on hydra")
-        elif hydra_output[package][0]["evals"]:
-            print(
-                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
-            )
-        elif hydra_output[package][0]["status"] == "Cancelled":
-            print(f"Package {package} was cancelled")
-        else:
-            print(f"Package {package} failed due to an eval failure")
+        # just a stub/demonstration of the current packages
+        # TODO: Add a frontend to display them nicely
+        for package, hydra_output in nixcbm.hydra_build_status.items():
+            result = _get_build_status_from_json(hydra_output[package])
+            if result:
+                print(f"{package} built successfully on hydra")
+            elif hydra_output[package][0]["evals"]:
+                print(
+                    f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
+                )
+            elif hydra_output[package][0]["status"] == "Cancelled":
+                print(f"Package {package} was cancelled")
+            else:
+                print(f"Package {package} failed due to an eval failure")
+    elif action == "frontend":
+        _preflight(nixpkgs)
+        logging.info("Loading frontend")
+        frontend.app.run(debug=True)
+    else:
+        raise KeyError("Please enter either frontend or maintainer")
 
 
 class NixCbm:

@@ -39,3 +39,8 @@ dmypy.json
 
 *egg-info/
 dist/
+
+# frontend
+_pgbackup
+_pginfo
+pinegrow.json

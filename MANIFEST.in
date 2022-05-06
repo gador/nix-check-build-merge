@@ -1,1 +1,3 @@
-nix_cbm/nix/check-maintainer.nix
+include src/nix_cbm/nix/check-maintainer.nix
+recursive-include src/nix_cbm/frontend/templates *.html
+recursive-include src/nix_cbm/frontend/static *.css *.js
