@@ -10,14 +10,14 @@ class MyTestCase(unittest.TestCase):
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
     @mock.patch("nix_cbm.git.git_pull")
-    @mock.patch("nix_cbm.git.git_checkout")
+    @mock.patch("nix_cbm.git.git_worktree")
     @mock.patch("nix_cbm.checks.check_tools", return_value=[])
-    def test_preflight(self, check_tools, nixpkgs_dir, git_pull, git_checkout ):
+    def test_preflight(self, check_tools, nixpkgs_dir, git_pull, git_worktree ):
         self.assertTrue(nix_cbm._preflight("/"))
         nixpkgs_dir.assert_called_once()
         check_tools.assert_called_once()
+        git_worktree.assert_called_once()
         git_pull.assert_called_once()
-        git_checkout.assert_called_once()
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
     @mock.patch("nix_cbm.git.git_checkout")

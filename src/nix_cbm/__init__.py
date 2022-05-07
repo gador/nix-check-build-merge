@@ -26,8 +26,9 @@ def _preflight(nixpkgs_path: str) -> bool:
             f"The following programs are missing: + ${str(missing_programs)}"
         )
     checks.check_nixpkgs_dir(nixpkgs_path)
-    git.git_pull(nixpkgs_path)
-    git.git_checkout(nixpkgs_path)
+    git.git_worktree(repo=nixpkgs_path, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
+    git.git_pull(repo=Config.NIXPKGS_WORKDIR)
+    # git.git_checkout(repo=Config.NIXPKGS_WORKDIR)
     return True
 
 
@@ -66,6 +67,29 @@ def _insert_or_update(package: str, result: bool, hydra_output: dict):
     frontend.db.session.commit()
 
 
+def refresh_build_status(nixpkgs, maintainer):
+    nixcbm = NixCbm()
+    nixcbm.nixpkgs_repo = nixpkgs
+    nixcbm.find_maintained_packages(maintainer)
+    nixcbm.check_hydra_status(nixcbm.maintained_packages)
+
+    # just a stub/demonstration of the current packages
+    # TODO: Add a frontend to display them nicely
+    for package, hydra_output in nixcbm.hydra_build_status.items():
+        result = _get_build_status_from_json(hydra_output[package])
+        _insert_or_update(package=package, result=result, hydra_output=hydra_output)
+        if result:
+            print(f"{package} built successfully on hydra")
+        elif hydra_output[package][0]["evals"]:
+            print(
+                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
+            )
+        elif hydra_output[package][0]["status"] == "Cancelled":
+            print(f"Package {package} was cancelled")
+        else:
+            print(f"Package {package} failed due to an eval failure")
+
+
 def main() -> None:
     # TODO add CLI and API interface
     cli()
@@ -83,26 +107,7 @@ def cli(nixpkgs, maintainer, action):
     """
     if action == "maintainer":
         _preflight(nixpkgs)
-        nixcbm = NixCbm()
-        nixcbm.nixpkgs_repo = nixpkgs
-        nixcbm.find_maintained_packages(maintainer)
-        nixcbm.check_hydra_status(nixcbm.maintained_packages)
-
-        # just a stub/demonstration of the current packages
-        # TODO: Add a frontend to display them nicely
-        for package, hydra_output in nixcbm.hydra_build_status.items():
-            result = _get_build_status_from_json(hydra_output[package])
-            _insert_or_update(package=package, result=result, hydra_output=hydra_output)
-            if result:
-                print(f"{package} built successfully on hydra")
-            elif hydra_output[package][0]["evals"]:
-                print(
-                    f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
-                )
-            elif hydra_output[package][0]["status"] == "Cancelled":
-                print(f"Package {package} was cancelled")
-            else:
-                print(f"Package {package} failed due to an eval failure")
+        refresh_build_status(nixpkgs=nixpkgs, maintainer=maintainer)
     elif action == "frontend":
         _preflight(nixpkgs)
         logging.info("Loading frontend")
@@ -119,6 +124,7 @@ class NixCbm:
 
     def __init__(self):
         self.nixpkgs_repo = ""
+        self.maintainer = ""
         self.maintained_packages = []
         self.hydra_build_status = {}
 

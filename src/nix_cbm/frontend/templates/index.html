@@ -14,8 +14,7 @@
     </head>
     <body>
         <div class="col-lg-8 mx-auto p-3 py-md-5">
-            <header class="d-flex align-items-center pb-3 mb-5 border-bottom">
-                <a href="#" class="d-flex align-items-center text-dark text-decoration-none"> <span class="fs-4">Nix Check Build Merge</span> </a>
+            <header class="d-flex align-items-center pb-3 mb-5 border-bottom"><a href="#" class="d-flex align-items-center text-dark text-decoration-none"> <span class="fs-4">Nix Check Build Merge</span> </a>
             </header>
             <main>
                 <h1>Nix Check Build Merge</h1>
@@ -23,6 +22,14 @@
                 <div class="mb-5">
                     <form method="post" action="/">
                         <input type="submit" value="Check for Maintainer" name="check" class="btn btn-primary"/>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Local Nixpkgs repository</label>
+                            <input type="text" class="form-control" name="nixpkgs_path" placeholder="absolute path to nixpkgs" value = "{{ nixpkgs_path }}"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Maintainer</label>
+                            <input type="text" class="form-control" name="maintainer" placeholder="Maintainer handle" value="{{ maintainer}}"/>
+                        </div>
                     </form>
                 </div>
                 <table id="data" class="table table-striped">
@@ -46,7 +53,8 @@
                     </tbody>
                 </table>
             </main>
-            <footer class="pt-5 my-5 text-muted border-top"><a href="https://github.com/gador/nix-check-build-merge" target="_blank">Nix Check Build Merge on GitHub</a>
+            <footer class="pt-5 my-5 text-muted border-top">
+                <a href="https://github.com/gador/nix-check-build-merge" target="_blank">Nix Check Build Merge on GitHub</a>
             </footer>
         </div>
         <script type="text/javascript" src="{{ url_for('static', filename='popper.min.js') }}"></script>
