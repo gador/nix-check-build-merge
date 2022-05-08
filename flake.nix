@@ -130,7 +130,7 @@
             # don't use cache dir, since it is read only with nix
             python -m pytest ${
               ./.
-            } -p no:cacheprovider -n auto --cov nix_cbm --cov-report term-missing
+            } -p no:cacheprovider -n auto --cov nix_cbm --cov-report term-missing --cov-config=.coveragerc
           '';
         };
       });
