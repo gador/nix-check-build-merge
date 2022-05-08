@@ -15,3 +15,5 @@ class Config(object):
         "DATABASE_URL"
     ) or "sqlite:///" + os.path.join(basedir, "nixcbm.db")
     NIXPKGS_WORKDIR = os.environ.get("NIXPKGS_WORKDIR") or nixpkgs_workdir
+    MAINTAINER = os.environ.get("MAINTAINER") or ""
+    NIXPKGS_ORIGINAL = os.environ.get("NIXPKGS") or ""

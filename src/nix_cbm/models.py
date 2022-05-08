@@ -7,6 +7,7 @@ class Packages(db.Model):
     hydra_status = db.Column(db.Boolean())
     build_url = db.Column(db.String(128))
     timestamp = db.Column(db.DateTime())
+    last_checked = db.Column(db.DateTime())
 
     # for debugging
     def __repr__(self):

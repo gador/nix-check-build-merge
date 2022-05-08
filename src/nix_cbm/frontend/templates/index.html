@@ -21,15 +21,7 @@
                 <p class="fs-5 col-md-8">Packages built by {{ maintainer }}</p>
                 <div class="mb-5">
                     <form method="post" action="/">
-                        <input type="submit" value="Check for Maintainer" name="check" class="btn btn-primary"/>
-                        <div class="mb-3">
-                            <label for="exampleFormControlInput1" class="form-label">Local Nixpkgs repository</label>
-                            <input type="text" class="form-control" name="nixpkgs_path" placeholder="absolute path to nixpkgs" value = "{{ nixpkgs_path }}"/>
-                        </div>
-                        <div class="mb-3">
-                            <label for="exampleFormControlInput1" class="form-label">Maintainer</label>
-                            <input type="text" class="form-control" name="maintainer" placeholder="Maintainer handle" value="{{ maintainer}}"/>
-                        </div>
+                        <input type="submit" value="Update" name="check" class="btn btn-primary"/>
                     </form>
                 </div>
                 <table id="data" class="table table-striped">
@@ -39,6 +31,7 @@
                             <th>Hydra Build Status</th>
                             <th>Build URL</th>
                             <th>Timestamp</th>
+                            <th>Last checked</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,6 +41,7 @@
                             <td>{{ package.hydra_status }}</td>
                             <td><a href="{{ package.build_url }}" target="_blank">{{ package.build_url }}</a></td>
                             <td>{{ package.timestamp }}</td>
+                            <td>{{ package.last_checked }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

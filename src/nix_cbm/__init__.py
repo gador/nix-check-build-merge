@@ -6,9 +6,12 @@ import subprocess
 import tempfile
 
 import click
+from flask_migrate import upgrade
 
 from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,7 +19,9 @@ logging.basicConfig(level=logging.DEBUG)
 def _preflight(nixpkgs_path: str) -> bool:
     """
     Check if all running conditions are met.
-    Also, cd to the nixpkgs dir.
+    This is the only function to interact with the
+    local nixpkgs repo. From now on, we'll work
+    with the workdir.
     OUTPUT: ok, bool.
     """
     logging.debug("running preflight checklist")
@@ -28,6 +33,11 @@ def _preflight(nixpkgs_path: str) -> bool:
     checks.check_nixpkgs_dir(nixpkgs_path)
     git.git_worktree(repo=nixpkgs_path, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
     git.git_pull(repo=Config.NIXPKGS_WORKDIR)
+    # check for database
+    if not os.path.isfile(Config.SQLALCHEMY_DATABASE_URI.replace("sqlite:///", "")):
+        logging.info(f"Creating db at {Config.SQLALCHEMY_DATABASE_URI}")
+        with frontend.app.app_context():
+            upgrade(directory=os.path.join(basedir, "migrations"), revision="head")
     # git.git_checkout(repo=Config.NIXPKGS_WORKDIR)
     return True
 
@@ -58,19 +68,21 @@ def _insert_or_update(package: str, result: bool, hydra_output: dict):
             hydra_status=result,
             build_url=build_url,
             timestamp=timestamp,
+            last_checked=datetime.datetime.now(),
         )
         frontend.db.session.add(db_entry)
     else:
         current_package.hydra_status = result
         current_package.build_url = build_url
         current_package.timestamp = timestamp
+        current_package.last_checked = datetime.datetime.now()
     frontend.db.session.commit()
 
 
-def refresh_build_status(nixpkgs, maintainer):
+def refresh_build_status():
     nixcbm = NixCbm()
-    nixcbm.nixpkgs_repo = nixpkgs
-    nixcbm.find_maintained_packages(maintainer)
+    nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
+    nixcbm.find_maintained_packages(Config.MAINTAINER)
     nixcbm.check_hydra_status(nixcbm.maintained_packages)
 
     # just a stub/demonstration of the current packages
@@ -102,19 +114,19 @@ def main() -> None:
 def cli(nixpkgs, maintainer, action):
     """
     CLI interface for nix-check-build-merge.\n
-    Use "maintainer" for checking the build status for all packages belonging to "maintainer"\n
+    Use "update" for checking the build status for all packages belonging to "maintainer"\n
     Use "frontend" to test the frontend
     """
-    if action == "maintainer":
-        _preflight(nixpkgs)
-        refresh_build_status(nixpkgs=nixpkgs, maintainer=maintainer)
+    Config.NIXPKGS_ORIGINAL = nixpkgs
+    Config.MAINTAINER = maintainer
+    _preflight(Config.NIXPKGS_ORIGINAL)
+    if action == "update":
+        refresh_build_status()
     elif action == "frontend":
-        _preflight(nixpkgs)
         logging.info("Loading frontend")
-        logging.debug(f"sqlite db is at {Config.SQLALCHEMY_DATABASE_URI}")
-        frontend.app.run(debug=True)
+        frontend.app.run(debug=True, use_reloader=False)
     else:
-        raise KeyError("Please enter either frontend or maintainer")
+        raise KeyError("Please enter either frontend or update")
 
 
 class NixCbm:
@@ -123,12 +135,12 @@ class NixCbm:
     """
 
     def __init__(self):
-        self.nixpkgs_repo = ""
-        self.maintainer = ""
+        self.nixpkgs_repo = Config.NIXPKGS_WORKDIR
+        self.maintainer = Config.MAINTAINER
         self.maintained_packages = []
         self.hydra_build_status = {}
 
-    def find_maintained_packages(self, maintainer: str):
+    def find_maintained_packages(self, maintainer: str = Config.MAINTAINER):
         """ "
         find all occurrences of a given maintainer
         INPUT: maintainer, string.
