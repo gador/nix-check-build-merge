@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 import click
-from flask_migrate import upgrade
+import flask_migrate
 
 from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
@@ -37,7 +37,9 @@ def _preflight(nixpkgs_path: str) -> bool:
     if not os.path.isfile(Config.SQLALCHEMY_DATABASE_URI.replace("sqlite:///", "")):
         logging.info(f"Creating db at {Config.SQLALCHEMY_DATABASE_URI}")
         with frontend.app.app_context():
-            upgrade(directory=os.path.join(basedir, "migrations"), revision="head")
+            flask_migrate.upgrade(
+                directory=os.path.join(basedir, "migrations"), revision="head"
+            )
     # git.git_checkout(repo=Config.NIXPKGS_WORKDIR)
     return True
 

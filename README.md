@@ -59,6 +59,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+[![Nix CBM Screen Shot][product-screenshot]]
+
 This is an early stage draft of a project with the goals of making maintaining and reviewing of packages in the Nix ecosystem easier than it currently is. It will consist of a backend server component and a simple web frontend. In its early stage, it should allow the automatic (re)building of the maintained packages of the given user and report build failures. 
 In later stages it is planed to also help review new PR's, hopefully in a more automated way.
 
@@ -211,3 +213,4 @@ Project Link: [https://github.com/gador/nix-check-build-merge](https://github.co
 [issues-url]: https://github.com/gador/nix-check-build-merge/issues
 [license-shield]: https://img.shields.io/github/license/gador/nix-check-build-merge.svg?style=for-the-badge
 [license-url]: https://github.com/gador/nix-check-build-merge/blob/master/LICENSE.txt
+[product-screenshot]: images/screenshot.jpg

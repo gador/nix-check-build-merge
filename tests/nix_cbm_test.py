@@ -9,15 +9,20 @@ from nix_cbm import NixCbm
 class MyTestCase(unittest.TestCase):
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
-    @mock.patch("nix_cbm.git.git_pull")
     @mock.patch("nix_cbm.git.git_worktree")
+    @mock.patch("nix_cbm.git.git_pull")
     @mock.patch("nix_cbm.checks.check_tools", return_value=[])
-    def test_preflight(self, check_tools, nixpkgs_dir, git_pull, git_worktree ):
+    @mock.patch("flask_migrate.upgrade")
+    @mock.patch("os.path.isfile", return_value=False)
+    def test_preflight(self, mock_config, upgrade, check_tools, git_pull, git_worktree, nixpkgs_dir):
         self.assertTrue(nix_cbm._preflight("/"))
         nixpkgs_dir.assert_called_once()
         check_tools.assert_called_once()
         git_worktree.assert_called_once()
         git_pull.assert_called_once()
+        mock_config.assert_called_once()
+        upgrade.assert_called_once()
+
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
     @mock.patch("nix_cbm.git.git_checkout")
