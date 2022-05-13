@@ -9,7 +9,9 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+    # cannot use eachDefaultSystem due to pyopenssl being broken
+    # on darwin and aarch64. see https://github.com/pyca/pyopenssl/issues/873
+    flake-utils.lib.eachSystem [flake-utils.lib.system.x86_64-linux] (system:
       let
         venvDir = "./.venv";
         pkgs = import nixpkgs { inherit system; };
@@ -95,6 +97,7 @@
           program = "${package}/bin/nixcbm";
         };
         devShells.default = devEnv;
+        # use nix flake check -L to print more test info
         checks = {
           format = pkgs.runCommand "format" {
             buildInputs = with pkgs; [
@@ -128,9 +131,7 @@
             # need a home for db file
             export HOME=$TMPDIR
             # don't use cache dir, since it is read only with nix
-            python -m pytest ${
-              ./.
-            } -p no:cacheprovider -n auto --cov nix_cbm --cov-report term-missing --cov-config=.coveragerc
+            python -m pytest ${./.} -v -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.coveragerc}
           '';
           mypy = pkgs.runCommand "mypy" {
             buildInputs = with pkgs.python3Packages; [
