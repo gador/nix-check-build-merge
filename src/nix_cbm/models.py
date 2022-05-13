@@ -1,7 +1,7 @@
 from nix_cbm.frontend import db
 
 
-class Packages(db.Model):
+class Packages(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
     hydra_status = db.Column(db.Boolean())
@@ -9,6 +9,5 @@ class Packages(db.Model):
     timestamp = db.Column(db.DateTime())
     last_checked = db.Column(db.DateTime())
 
-    # for debugging
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Package {}>".format(self.name)

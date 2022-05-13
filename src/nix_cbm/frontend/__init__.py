@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate  # type: ignore
+from flask_sqlalchemy import SQLAlchemy  # type: ignore
 
 import nix_cbm
 from nix_cbm.config import Config
@@ -12,7 +12,7 @@ migrate = Migrate(app, db)
 
 
 @app.route("/", methods=["GET", "POST"])
-def index():
+def index():  # type: ignore
     # this needs to be offloaded to a different worker
     # also, for now maintainer is hardcoded
     # TODO: add form to enter maintainer

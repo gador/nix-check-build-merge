@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 import click
-import flask_migrate
+import flask_migrate  # type: ignore
 
 from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
@@ -44,16 +44,16 @@ def _preflight(nixpkgs_path: str) -> bool:
     return True
 
 
-def _get_build_status_from_json(package_json: dict):
+def _get_build_status_from_json(package_json: dict) -> bool:
     # the 0 implies the most recent build
     return package_json[0]["success"]
 
 
-def _insert_or_update(package: str, result: bool, hydra_output: dict):
+def _insert_or_update(package: str, result: bool, hydra_output: dict) -> None:
     try:
-        timestamp = str(hydra_output[package][0]["timestamp"])
-        timestamp = timestamp.replace("Z", "+00:00")
-        timestamp = datetime.datetime.fromisoformat(timestamp)
+        timestamp_str = str(hydra_output[package][0]["timestamp"])
+        timestamp_str = timestamp_str.replace("Z", "+00:00")
+        timestamp = datetime.datetime.fromisoformat(timestamp_str)
     except KeyError:
         timestamp = None
 
@@ -81,7 +81,7 @@ def _insert_or_update(package: str, result: bool, hydra_output: dict):
     frontend.db.session.commit()
 
 
-def refresh_build_status():
+def refresh_build_status() -> None:
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     nixcbm.find_maintained_packages(Config.MAINTAINER)
@@ -113,7 +113,7 @@ def main() -> None:
 @click.option("--nixpkgs", default=".", help="path to nixpkgs")
 @click.option("--maintainer", help="maintainer to look for")
 @click.argument("action")
-def cli(nixpkgs, maintainer, action):
+def cli(nixpkgs: str, maintainer: str, action: str) -> None:
     """
     CLI interface for nix-check-build-merge.\n
     Use "update" for checking the build status for all packages belonging to "maintainer"\n
@@ -136,13 +136,13 @@ class NixCbm:
     Main class to save important state information
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nixpkgs_repo = Config.NIXPKGS_WORKDIR
         self.maintainer = Config.MAINTAINER
-        self.maintained_packages = []
-        self.hydra_build_status = {}
+        self.maintained_packages: list[str] = []
+        self.hydra_build_status: dict = {}
 
-    def find_maintained_packages(self, maintainer: str = Config.MAINTAINER):
+    def find_maintained_packages(self, maintainer: str = Config.MAINTAINER) -> None:
         """ "
         find all occurrences of a given maintainer
         INPUT: maintainer, string.
@@ -168,7 +168,7 @@ class NixCbm:
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
 
-    def check_hydra_status(self, packages: list[str]):
+    def check_hydra_status(self, packages: list[str]) -> None:
         """
         Check the hydra build status of a set of packages
         Parameters
