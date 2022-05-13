@@ -132,6 +132,18 @@
               ./.
             } -p no:cacheprovider -n auto --cov nix_cbm --cov-report term-missing --cov-config=.coveragerc
           '';
+          mypy = pkgs.runCommand "mypy" {
+            buildInputs = with pkgs.python3Packages; [
+              mypy
+              flask
+              click
+              flask_sqlalchemy
+              flask_migrate
+            ];
+          } ''
+            mkdir $out
+            mypy --config-file ${./setup.cfg} ${./src}
+          '';
         };
       });
 }

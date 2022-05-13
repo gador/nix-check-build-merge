@@ -3,7 +3,7 @@ import os
 from shutil import which
 
 
-def _exists(name: str) -> str:
+def _exists(name: str) -> bool:
     """
     Check for the existence of a program
     INPUT: Name, string.

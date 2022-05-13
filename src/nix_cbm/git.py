@@ -28,7 +28,7 @@ def _sh(
     return subprocess.run(command, cwd=cwd, check=check, text=True)
 
 
-def git_pull(repo: str, commit: str = "master", remote: str = "origin"):
+def git_pull(repo: str, commit: str = "master", remote: str = "origin") -> bool:
     """
     Pull the current refs from remote
     Parameters
@@ -71,7 +71,7 @@ def git_checkout(repo: str, commit: str = "master") -> bool:
 
 def git_fetch(
     repo: str, remote_repo: str = "https://github.com/NixOS/nixpkgs", base: str = "master"
-):
+) -> list[str]:
     cmd = [
         "git",
         "-c",
