@@ -1,5 +1,6 @@
 import unittest
 from unittest import mock
+
 import nix_cbm.checks as checks
 
 
@@ -10,7 +11,9 @@ class CheckTestCase(unittest.TestCase):
 
     def test_check_tools(self):
         self.assertEqual(checks.check_tools(["python"]), [])
-        self.assertEqual(checks.check_tools(["non_existing_program"]), ['non_existing_program'])
+        self.assertEqual(
+            checks.check_tools(["non_existing_program"]), ["non_existing_program"]
+        )
 
     @mock.patch("os.path.exists")
     def test_check_nixpkgs_dir(self, path):
@@ -21,5 +24,5 @@ class CheckTestCase(unittest.TestCase):
         self.assertRaises(LookupError, checks.check_nixpkgs_dir, "/")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -38,8 +38,10 @@
           #!${pkgs.runtimeShell}
           echo "Sorting imports"
           isort src/nix_cbm
+          isort tests
           echo "Formatting"
           black src/nix_cbm/* -l 90
+          black tests/* -l 90
         '';
         devEnv = pkgs.mkShell {
           inherit venvDir;
