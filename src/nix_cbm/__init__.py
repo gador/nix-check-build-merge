@@ -44,7 +44,7 @@ def _preflight(nixpkgs_path: str) -> bool:
     return True
 
 
-def _get_build_status_from_json(package_json: dict) -> bool:
+def _get_build_status_from_json(package_json: list[dict]) -> bool:
     # the 0 implies the most recent build
     return package_json[0]["success"]
 
@@ -110,7 +110,7 @@ def main() -> None:
 
 
 @click.command()
-@click.option("--nixpkgs", default=".", help="path to nixpkgs")
+@click.option("--nixpkgs", help="path to nixpkgs")
 @click.option("--maintainer", help="maintainer to look for")
 @click.argument("action")
 def cli(nixpkgs: str, maintainer: str, action: str) -> None:
@@ -119,8 +119,14 @@ def cli(nixpkgs: str, maintainer: str, action: str) -> None:
     Use "update" for checking the build status for all packages belonging to "maintainer"\n
     Use "frontend" to test the frontend
     """
-    Config.NIXPKGS_ORIGINAL = nixpkgs
-    Config.MAINTAINER = maintainer
+    if not Config.NIXPKGS_ORIGINAL and not nixpkgs:
+        raise LookupError("Please provide a path to nixpkgs")
+    if not Config.NIXPKGS_ORIGINAL:
+        Config.NIXPKGS_ORIGINAL = nixpkgs
+    if not Config.MAINTAINER and not maintainer:
+        raise LookupError("Please provide a maintainer")
+    if not Config.MAINTAINER:
+        Config.MAINTAINER = maintainer
     _preflight(Config.NIXPKGS_ORIGINAL)
     if action == "update":
         refresh_build_status()

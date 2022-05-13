@@ -45,7 +45,7 @@ def git_pull(repo: str, commit: str = "master", remote: str = "origin") -> bool:
     bool
         True if successful
     """
-    logging.info(f"Will now pull {str(commit)} from {str(remote)}")
+    logging.info(f"Will now pull {str(commit)} from {str(remote)} on {repo}")
     cmd = ["git", "pull", remote, commit]
     return not bool(_sh(cmd, cwd=repo).returncode)
 
@@ -110,6 +110,7 @@ def git_worktree(nixpkgs_dir: str, repo: str, commit: str = "master") -> bool:
 
     """
     if not os.path.exists(nixpkgs_dir):
+        logging.info(f"Will now create workdir at {nixpkgs_dir} from {repo} at {commit}")
         cmd = ["git", "worktree", "add", "-f", "-B", "nixcbm-master", nixpkgs_dir, commit]
         return not bool(_sh(cmd, cwd=repo, check=False).returncode)
     else:
