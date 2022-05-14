@@ -158,7 +158,7 @@ class NixCbm:
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
 
-    def check_hydra_status(self, packages: list[str], arch: str = "x86_64-linux"):
+    def check_hydra_status(self, packages: list[str], arch: str = "x86_64-linux") -> None:
         """
         Check the hydra build status of a set of packages
         Parameters
