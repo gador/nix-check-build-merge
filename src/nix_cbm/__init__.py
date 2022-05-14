@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 import tempfile
+from typing import Optional
 
 import click
 import flask_migrate  # type: ignore
@@ -49,36 +50,57 @@ def _get_build_status_from_json(package_json: list[dict]) -> bool:
     return package_json[0]["success"]
 
 
-def _insert_or_update(package: str, result: bool, hydra_output: dict) -> None:
-    try:
-        timestamp_str = str(hydra_output[package][0]["timestamp"])
-        timestamp_str = timestamp_str.replace("Z", "+00:00")
-        timestamp = datetime.datetime.fromisoformat(timestamp_str)
-    except KeyError:
-        timestamp = None
+class InsertOrUpdate:
 
-    try:
-        build_url = hydra_output[package][0]["build_url"]
-    except KeyError:
-        build_url = None
+    package: str
+    hydra_output: dict
+    result: bool
 
-    current_package = models.Packages.query.filter_by(name=package).first()
-    if not current_package:
-        # package doesn't exist yet
+    def convert_timestamp(self) -> Optional[datetime.datetime]:
+
+        try:
+            timestamp_str = str(self.hydra_output[self.package][0]["timestamp"])
+            timestamp_str = timestamp_str.replace("Z", "+00:00")
+            timestamp = datetime.datetime.fromisoformat(timestamp_str)
+        except KeyError:
+            timestamp = None
+        return timestamp
+
+    def convert_build_url(self) -> Optional[str]:
+        try:
+            build_url = str(self.hydra_output[self.package][0]["build_url"])
+        except KeyError:
+            build_url = None
+        return build_url
+
+    def check_for_package(self) -> models.Packages:
+        return models.Packages.query.filter_by(name=self.package).first()
+
+    def insert_or_update(self) -> None:
+        if self.check_for_package():
+            logging.debug(f"Updating {self.package}")
+            self.update()
+        else:
+            logging.debug(f"Adding {self.package}")
+            frontend.db.session.add(self.create_db_entry())
+        frontend.db.session.commit()
+
+    def create_db_entry(self) -> models.Packages:
         db_entry = models.Packages(
-            name=package,
-            hydra_status=result,
-            build_url=build_url,
-            timestamp=timestamp,
+            name=self.package,
+            hydra_status=self.result,
+            build_url=self.convert_build_url(),
+            timestamp=self.convert_timestamp(),
             last_checked=datetime.datetime.now(),
         )
-        frontend.db.session.add(db_entry)
-    else:
-        current_package.hydra_status = result
-        current_package.build_url = build_url
-        current_package.timestamp = timestamp
+        return db_entry
+
+    def update(self) -> None:
+        current_package = self.check_for_package()
+        current_package.hydra_status = self.result
+        current_package.build_url = self.convert_build_url()
+        current_package.timestamp = self.convert_timestamp()
         current_package.last_checked = datetime.datetime.now()
-    frontend.db.session.commit()
 
 
 def refresh_build_status() -> None:
@@ -87,6 +109,27 @@ def refresh_build_status() -> None:
     nixcbm.find_maintained_packages(Config.MAINTAINER)
     nixcbm.check_hydra_status(nixcbm.maintained_packages)
     # TODO: Add other architectures
+
+    for package, hydra_output in nixcbm.hydra_build_status.items():
+        result = _get_build_status_from_json(hydra_output[package])
+        insert_or_update = InsertOrUpdate()
+
+        insert_or_update.package = package
+        insert_or_update.result = result
+        insert_or_update.hydra_output = hydra_output
+        insert_or_update.insert_or_update()
+
+        # _insert_or_update(package=package, result=result, hydra_output=hydra_output)
+        if result:
+            print(f"{package} built successfully on hydra")
+        elif hydra_output[package][0]["evals"]:
+            print(
+                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
+            )
+        elif hydra_output[package][0]["status"] == "Cancelled":
+            print(f"Package {package} was cancelled")
+        else:
+            print(f"Package {package} failed due to an eval failure")
 
 
 def main() -> None:
