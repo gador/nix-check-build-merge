@@ -1,10 +1,14 @@
+import datetime
+import os
 import unittest
 from unittest import mock
 
+import flask_migrate  # type: ignore
 import pytest
+from flask import Flask, render_template, request
+from flask_sqlalchemy import SQLAlchemy  # type: ignore
 
 import nix_cbm
-from nix_cbm import NixCbm
 
 
 class MyTestCase(unittest.TestCase):
@@ -150,6 +154,27 @@ class MyTestCase(unittest.TestCase):
             "evals": True,
         }
     ]
+    basedir = os.path.abspath(os.path.dirname(__file__))
+
+    def setup_db(self):
+        # setup test environment
+        nix_cbm.Config.SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+        nix_cbm.Config.SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+        # override frontend db connection with the above test connection
+        nix_cbm.frontend.app.config.from_object(nix_cbm.Config)
+        with nix_cbm.frontend.app.app_context():
+            flask_migrate.upgrade(
+                directory=os.path.join(
+                    self.basedir, "../", "src", "nix_cbm", "migrations"
+                ),
+                revision="head",
+            )
+
+    def tear_down(self):
+        # self.db.init_app(self.app)
+        with nix_cbm.frontend.app.app_context():
+            nix_cbm.frontend.db.drop_all()
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
     @mock.patch("nix_cbm.git.git_worktree")
@@ -177,20 +202,32 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(nix_cbm._get_build_status_from_json(self.json_success))
         self.assertFalse(nix_cbm._get_build_status_from_json(self.json_failure))
 
-    # TODO: refactor insert_or_update function
-    # @mock.patch("models.Packages.query.filter_by", return_value=["pgadmin"])
-    # def test_insert_or_update_package_exists(self):
-    #     package = "test_package"
-    #     result = True
-    #     self.assertTrue(
-    #         nix_cbm._insert_or_update(
-    #             package=package, result=result, hydra_output=self.mock_hydra_output
-    #         )
-    #     )
+    def test_insert_or_update_package(self):
+        """
+        Test the database model and connection
+        """
+
+        insert_or_update = nix_cbm.InsertOrUpdate("pgadmin", self.mock_hydra_output, True)
+
+        self.setup_db()
+        timestamp = datetime.datetime.fromisoformat("2020-02-19T11:19:06+00:00")
+        buildurl = "https://hydra.nixos.org/build/113209147"
+
+        self.assertEqual(insert_or_update.convert_timestamp(), timestamp)
+        self.assertEqual(insert_or_update.convert_build_url(), buildurl)
+        self.assertFalse(insert_or_update.check_for_package())
+        self.assertTrue(insert_or_update.create_db_entry())
+
+        # returns none, but should insert the package in the database
+        self.assertIsNone(insert_or_update.insert_or_update())
+        # which is checked here
+        self.assertTrue(insert_or_update.check_for_package())
+
+        self.tear_down()
 
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
-        NixCbm().find_maintained_packages(maintainer="test_maintainer")
+        nix_cbm.NixCbm().find_maintained_packages(maintainer="test_maintainer")
         mock_subprocess.assert_called_once()
 
     @mock.patch("nix_cbm.cli")

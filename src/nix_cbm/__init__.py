@@ -50,11 +50,11 @@ def _get_build_status_from_json(package_json: list[dict]) -> bool:
     return package_json[0]["success"]
 
 
-class InsertOrUpdate:
-
-    package: str
-    hydra_output: dict
-    result: bool
+class InsertOrUpdate(object):
+    def __init__(self, package: str, hydra_output: dict, result: bool):
+        self.package = package
+        self.hydra_output = hydra_output
+        self.result = result
 
     def convert_timestamp(self) -> Optional[datetime.datetime]:
 
@@ -112,11 +112,7 @@ def refresh_build_status() -> None:
 
     for package, hydra_output in nixcbm.hydra_build_status.items():
         result = _get_build_status_from_json(hydra_output[package])
-        insert_or_update = InsertOrUpdate()
-
-        insert_or_update.package = package
-        insert_or_update.result = result
-        insert_or_update.hydra_output = hydra_output
+        insert_or_update = InsertOrUpdate(package, hydra_output, result)
         insert_or_update.insert_or_update()
 
         # _insert_or_update(package=package, result=result, hydra_output=hydra_output)
