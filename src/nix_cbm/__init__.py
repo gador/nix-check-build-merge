@@ -86,26 +86,10 @@ def refresh_build_status():
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     nixcbm.find_maintained_packages(Config.MAINTAINER)
     nixcbm.check_hydra_status(nixcbm.maintained_packages)
-
-    # just a stub/demonstration of the current packages
-    # TODO: Add a frontend to display them nicely
-    for package, hydra_output in nixcbm.hydra_build_status.items():
-        result = _get_build_status_from_json(hydra_output[package])
-        _insert_or_update(package=package, result=result, hydra_output=hydra_output)
-        if result:
-            print(f"{package} built successfully on hydra")
-        elif hydra_output[package][0]["evals"]:
-            print(
-                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
-            )
-        elif hydra_output[package][0]["status"] == "Cancelled":
-            print(f"Package {package} was cancelled")
-        else:
-            print(f"Package {package} failed due to an eval failure")
+    # TODO: Add other architectures
 
 
 def main() -> None:
-    # TODO add CLI and API interface
     cli()
 
 
@@ -119,6 +103,7 @@ def cli(nixpkgs, maintainer, action):
     Use "update" for checking the build status for all packages belonging to "maintainer"\n
     Use "frontend" to test the frontend
     """
+    # TODO: Cleanup argument usage and/or environment variable usage
     Config.NIXPKGS_ORIGINAL = nixpkgs
     Config.MAINTAINER = maintainer
     _preflight(Config.NIXPKGS_ORIGINAL)
@@ -168,16 +153,17 @@ class NixCbm:
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
 
-    def check_hydra_status(self, packages: list[str]):
+    def check_hydra_status(self, packages: list[str], arch: str = "x86_64-linux"):
         """
         Check the hydra build status of a set of packages
         Parameters
         ----------
+        arch: str = "x86_64-linux"
+            which architecture to check
         packages: list[str]
             a list of packages to check
         """
         logging.info("Will now look for hydra build failures")
-        arch = "x86_64-linux"
         for package in packages:
             cmd = [
                 "hydra-check",
@@ -198,7 +184,3 @@ class NixCbm:
 
 if __name__ == "__main__":
     main()
-
-# functionality to implement
-# 2) git fetch current master
-# 3) search all packages for a given maintainer
