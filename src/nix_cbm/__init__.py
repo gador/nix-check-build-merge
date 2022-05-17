@@ -115,18 +115,6 @@ def refresh_build_status() -> None:
         insert_or_update = InsertOrUpdate(package, hydra_output, result)
         insert_or_update.insert_or_update()
 
-        # _insert_or_update(package=package, result=result, hydra_output=hydra_output)
-        if result:
-            print(f"{package} built successfully on hydra")
-        elif hydra_output[package][0]["evals"]:
-            print(
-                f"Package {package} failed. See log at {hydra_output[package][0]['build_url']}"
-            )
-        elif hydra_output[package][0]["status"] == "Cancelled":
-            print(f"Package {package} was cancelled")
-        else:
-            print(f"Package {package} failed due to an eval failure")
-
 
 def main() -> None:
     cli()

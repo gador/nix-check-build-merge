@@ -1,10 +1,12 @@
 import datetime
 import os
+import tempfile
 import unittest
 from unittest import mock
 
 import flask_migrate  # type: ignore
 import pytest
+from click.testing import CliRunner
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 
@@ -276,6 +278,57 @@ class MyTestCase(unittest.TestCase):
         mock_nixcbm.assert_called_once()
         get_build_status.assert_called_once()
         insertOrUpdate.assert_called_once()
+
+    @mock.patch("nix_cbm.frontend.app.run")
+    @mock.patch("nix_cbm.refresh_build_status")
+    @mock.patch("nix_cbm._preflight")
+    def test_cli(self, preflight, build_status, frontend):
+        # reset Config values, so we can test the CLI
+        old_nixpkgs = nix_cbm.Config.NIXPKGS_ORIGINAL
+        nix_cbm.Config.NIXPKGS_ORIGINAL = ""
+        old_maintainer = nix_cbm.Config.MAINTAINER
+        nix_cbm.Config.MAINTAINER = ""
+        with tempfile.TemporaryDirectory() as tmp:
+            runner = CliRunner()
+
+            result = runner.invoke(nix_cbm.cli, ["--nixpkgs", tmp, "update"])
+            assert result.exit_code == 1
+            assert result.output == ""
+
+            result = runner.invoke(
+                nix_cbm.cli,
+                ["--nixpkgs", tmp, "--maintainer", "test_maintainer", "update"],
+            )
+            assert result.exit_code == 0
+            assert result.output == ""
+            preflight.assert_called_once()
+            build_status.assert_called_once()
+            preflight.reset_mock()
+            build_status.reset_mock()
+
+            result = runner.invoke(
+                nix_cbm.cli,
+                ["--nixpkgs", tmp, "--maintainer", "test_maintainer", "frontend"],
+            )
+            assert result.exit_code == 0
+            assert result.output == ""
+            preflight.assert_called_once()
+            build_status.assert_not_called()
+            frontend.assert_called_once()
+
+            result = runner.invoke(
+                nix_cbm.cli, ["--nixpkgs", tmp, "--maintainer", "test_maintainer"]
+            )
+            assert result.exit_code == 2
+            assert "Error: Missing argument 'ACTION'." in result.output
+
+        # reset back to not influence other tests
+        nix_cbm.Config.NIXPKGS_ORIGINAL = old_nixpkgs
+        nix_cbm.Config.MAINTAINER = old_maintainer
+
+        # result = runner.invoke(nix_cbm.cli, ["--nixpkgs", "nixpkgs", "--maintainer", "test_maintainer", "update"])
+        # assert result.exit_code == 1
+        # assert result.output == ""
 
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
