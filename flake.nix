@@ -15,7 +15,7 @@
       let
         venvDir = "./.venv";
         pkgs = import nixpkgs { inherit system; };
-        pythonEnv = pkgs.python3.withPackages (ps:
+        pythonEnv = pkgs.python310.withPackages (ps:
           with ps; [
             flask
             flask_sqlalchemy
@@ -69,16 +69,16 @@
                 echo "Creating new venv environment in path: '${venvDir}'"
             python -m venv "${venvDir}"
             fi
-            ln -sf ${pythonEnv}/lib/python3.9/site-packages/* ${venvDir}/lib/python3.9/site-packages
+            ln -sf ${pythonEnv}/lib/python3.10/site-packages/* ${venvDir}/lib/python3.10/site-packages
             source "${venvDir}/bin/activate"
           '';
         };
-        package = pkgs.python3Packages.buildPythonApplication rec {
+        package = pkgs.python310Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
           version = "0.0.2";
           src = ./.;
 
-          propagatedBuildInputs = with pkgs.python3Packages; [
+          propagatedBuildInputs = with pkgs.python310Packages; [
             flask
             flask_sqlalchemy
             flask_migrate
@@ -90,7 +90,7 @@
           preCheck = ''
             export HOME=$TMPDIR
           '';
-          checkInputs = with pkgs.python3Packages; [ pytestCheckHook ];
+          checkInputs = with pkgs.python310Packages; [ pytestCheckHook ];
         };
       in rec {
         packages.default = package;
@@ -104,8 +104,8 @@
           format = pkgs.runCommand "format" {
             buildInputs = with pkgs; [
               black
-              python3Packages.flake8
-              python3Packages.vulture
+              python310Packages.flake8
+              python310Packages.vulture
             ];
           } ''
             mkdir $out
@@ -115,7 +115,7 @@
             vulture --min-confidence 70 --ignore-names "revision" ${./src}
           '';
           pytest = pkgs.runCommand "pytest" {
-            buildInputs = with pkgs.python3Packages; [
+            buildInputs = with pkgs.python310Packages; [
               pytest
               pytest-mock
               pytest-cov
@@ -133,10 +133,10 @@
             # need a home for db file
             export HOME=$TMPDIR
             # don't use cache dir, since it is read only with nix
-            python -m pytest ${./.} -v -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.coveragerc}
+            python -m pytest ${./.} -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.coveragerc}
           '';
           mypy = pkgs.runCommand "mypy" {
-            buildInputs = with pkgs.python3Packages; [
+            buildInputs = with pkgs.python310Packages; [
               mypy
               flask
               click
