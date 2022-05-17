@@ -128,6 +128,18 @@ class MyTestCase(unittest.TestCase):
             },
         ]
     }
+    mock_hydra_output_missing_data = {
+        "pgadmin": [
+            {
+                "icon": "\u2714",
+                "success": True,
+                "status": "Succeeded",
+                "name": "pgadmin3-1.22.2",
+                "arch": "x86_64-linux",
+                "evals": True,
+            }
+        ]
+    }
     json_success = [
         {
             "icon": "✔",
@@ -170,6 +182,7 @@ class MyTestCase(unittest.TestCase):
                 ),
                 revision="head",
             )
+            nix_cbm.frontend.db.create_all()
 
     def tear_down(self):
         # self.db.init_app(self.app)
@@ -222,8 +235,47 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNone(insert_or_update.insert_or_update())
         # which is checked here
         self.assertTrue(insert_or_update.check_for_package())
+        # now update should be performed
+        self.assertIsNone(insert_or_update.insert_or_update())
 
         self.tear_down()
+
+    def test_insert_or_update_package_missing_data(self):
+        """
+        Test the database model and connection with missing data
+        """
+
+        insert_or_update = nix_cbm.InsertOrUpdate(
+            "pgadmin", self.mock_hydra_output_missing_data, True
+        )
+
+        self.setup_db()
+
+        self.assertIsNone(insert_or_update.convert_timestamp())
+        self.assertIsNone(insert_or_update.convert_build_url())
+        self.assertFalse(insert_or_update.check_for_package())
+        self.assertTrue(insert_or_update.create_db_entry())
+
+        # returns none, but should insert the package in the database
+        self.assertIsNone(insert_or_update.insert_or_update())
+        # which is checked here
+        self.assertTrue(insert_or_update.check_for_package())
+
+        self.tear_down()
+
+    @mock.patch("nix_cbm.InsertOrUpdate")
+    @mock.patch("nix_cbm._get_build_status_from_json", return_value=True)
+    @mock.patch("nix_cbm.NixCbm")
+    def test_refresh_build_status(self, mock_nixcbm, get_build_status, insertOrUpdate):
+
+        mock_nixcbm.return_value.maintained_packages = ["pgadmin"]
+        mock_nixcbm.return_value.hydra_build_status = {"pgadmin": self.mock_hydra_output}
+
+        self.assertIsNone(nix_cbm.refresh_build_status())
+
+        mock_nixcbm.assert_called_once()
+        get_build_status.assert_called_once()
+        insertOrUpdate.assert_called_once()
 
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
