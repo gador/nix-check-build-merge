@@ -171,6 +171,11 @@ class MyTestCase(unittest.TestCase):
     basedir = os.path.abspath(os.path.dirname(__file__))
 
     def setup_db(self):
+        """setup_db sets up the database connection
+
+        This will start an in-memory sqlite database and run
+        the migration script on it.
+        """
         # setup test environment
         nix_cbm.Config.SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
         nix_cbm.Config.SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -187,6 +192,7 @@ class MyTestCase(unittest.TestCase):
             nix_cbm.frontend.db.create_all()
 
     def tear_down(self):
+        """tear_down drops all database content"""
         # self.db.init_app(self.app)
         with nix_cbm.frontend.app.app_context():
             nix_cbm.frontend.db.drop_all()
@@ -200,6 +206,26 @@ class MyTestCase(unittest.TestCase):
     def test_preflight(
         self, mock_config, upgrade, check_tools, git_pull, git_worktree, nixpkgs_dir
     ):
+        """test_preflight
+
+        this will test the preflight call and mock all other function
+        calls coming from here.
+
+        Parameters
+        ----------
+        mock_config : _type_
+            checks the existence of the sqlite file
+        upgrade : _type_
+            upgrade script called, if no database has been found
+        check_tools : _type_
+            call to check_tools (checks for existence of all needed tools)
+        git_pull : _type_
+            call to git_pull (pull in remote updates)
+        git_worktree : _type_
+            initiates the git worktree
+        nixpkgs_dir : _type_
+            checks for the existence of the nixpkgs path provided
+        """
         self.assertTrue(nix_cbm._preflight("/"))
         nixpkgs_dir.assert_called_once()
         check_tools.assert_called_once()
@@ -210,10 +236,12 @@ class MyTestCase(unittest.TestCase):
 
     @mock.patch("nix_cbm.checks.check_tools", return_value=["missing_program"])
     def test_preflight_missing_programs(self, check_tools):
+        """test_preflight_missing_programs test the LookupError for missing programs"""
         self.assertRaises(LookupError, nix_cbm._preflight, "nixpkgs_path")
         check_tools.assert_called_once()
 
     def test_get_build_stats(self):
+        """test_get_build_stats test the result of the build status from json"""
         self.assertTrue(nix_cbm._get_build_status_from_json(self.json_success))
         self.assertFalse(nix_cbm._get_build_status_from_json(self.json_failure))
 
@@ -269,6 +297,22 @@ class MyTestCase(unittest.TestCase):
     @mock.patch("nix_cbm._get_build_status_from_json", return_value=True)
     @mock.patch("nix_cbm.NixCbm")
     def test_refresh_build_status(self, mock_nixcbm, get_build_status, insertOrUpdate):
+        """test_refresh_build_status checks the refresh_build_status function
+
+        Here we needed to overwrite the return values of the class variables.
+        It also checks the calls to _get_build_status_from_json and the call
+        to the database routine "InsertOrUpdate"
+
+
+        Parameters
+        ----------
+        mock_nixcbm : _type_
+            the class, which contains all the state information
+        get_build_status : _type_
+            function to determine build success
+        insertOrUpdate : _type_
+            database connection class
+        """
 
         mock_nixcbm.return_value.maintained_packages = ["pgadmin"]
         mock_nixcbm.return_value.hydra_build_status = {"pgadmin": self.mock_hydra_output}
@@ -283,6 +327,20 @@ class MyTestCase(unittest.TestCase):
     @mock.patch("nix_cbm.refresh_build_status")
     @mock.patch("nix_cbm._preflight")
     def test_cli(self, preflight, build_status, frontend):
+        """test_cli tests the functionality of the CLI
+
+        Here we test the all the combinations of wrong and right
+        arguments and their result codes.
+
+        Parameters
+        ----------
+        preflight : _type_
+            call to _preflight
+        build_status : _type_
+            call to refresh_build_status
+        frontend : _type_
+            call to the frontend
+        """
         # reset Config values, so we can test the CLI
         old_nixpkgs = nix_cbm.Config.NIXPKGS_ORIGINAL
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
@@ -322,6 +380,13 @@ class MyTestCase(unittest.TestCase):
             assert result.exit_code == 2
             assert "Error: Missing argument 'ACTION'." in result.output
 
+        runner = CliRunner()
+
+        nix_cbm.Config.NIXPKGS_ORIGINAL = ""
+        result = runner.invoke(nix_cbm.cli, ["--maintainer", "test_maintainer", "update"])
+        assert result.exit_code == 1
+        assert result.output == ""
+
         # reset back to not influence other tests
         nix_cbm.Config.NIXPKGS_ORIGINAL = old_nixpkgs
         nix_cbm.Config.MAINTAINER = old_maintainer
@@ -330,8 +395,36 @@ class MyTestCase(unittest.TestCase):
         # assert result.exit_code == 1
         # assert result.output == ""
 
+    @mock.patch("json.loads")
+    @mock.patch("subprocess.run")
+    def test_check_hydra_status(self, mock_subprocess, mock_json):
+        """test_check_hydra_status
+
+        checks the call to the hydra script
+
+        Parameters
+        ----------
+        mock_subprocess : _type_
+            actual subprocess call
+        mock_json : _type_
+            the json.loads function which works on the output of the hydra script
+        """
+        mock_subprocess.return_value.stdout = True
+        nix_cbm.NixCbm().check_hydra_status(packages=["pgadmin"])
+        cmd = [
+            "hydra-check",
+            "pgadmin",
+            "--channel",
+            "master",
+            "--arch=" + "x86_64-linux",
+            "--json",
+        ]
+        mock_subprocess.assert_called_with(cmd, capture_output=True, check=True)
+        mock_json.assert_called_once()
+
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
+        """test_find_maintainer assert the call to subprocess"""
         nix_cbm.NixCbm().find_maintained_packages(maintainer="test_maintainer")
         mock_subprocess.assert_called_once()
 
@@ -339,8 +432,6 @@ class MyTestCase(unittest.TestCase):
     def test_main(self, mock_cli):
         nix_cbm.main()
         mock_cli.assert_called_once()
-
-    # TODO add test for click's CLI
 
 
 if __name__ == "__main__":
