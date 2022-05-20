@@ -61,7 +61,7 @@
 
 [![Nix CBM Screen Shot][product-screenshot]]
 
-This is an early stage draft of a project with the goals of making maintaining and reviewing of packages in the Nix ecosystem easier than it currently is. It will consist of a backend server component and a simple web frontend. In its early stage, it should allow the automatic (re)building of the maintained packages of the given user and report build failures. 
+This is an early stage draft of a project with the goal of making maintaining and reviewing of packages in the Nix ecosystem easier than it currently is. It will consist of a backend server component and a simple web frontend. In its early stage, it should allow the automatic (re)building of the maintained packages of the given user and report build failures. 
 In later stages it is planed to also help review new PR's, hopefully in a more automated way.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -106,14 +106,9 @@ Currently, this project was only tested and build on NixOS. If you have nix, it 
 ### Installation
 
 1. Install nix/NixOS.
-2. Clone the repo
+2. Run the application.
    ```sh
-   git clone https://github.com/gador/nix-check-build-merge.git
-   ```
-3. Run the shell
-   ```sh
-   nix develop . # for flakes
-   nix-shell # for non-flakes
+   nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /path/to/your/local/nixpkgs
    ```
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -129,6 +124,10 @@ nixcbm frontend --nixpkgs NIXPKGS_PATH --maintainer MAINTAINER
 where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo.
 
 Open your browser and go to http://localhost:5000
+
+You have two options: "Update maintained packages" and "Updata hydra-build".
+
+The first will look in the current nixpkgs repo for all the packages you maintain. The second option additionally will check online for the build status.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -194,7 +193,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Florian Brandes - [@twitter_handle](https://twitter.com/twitter_handle) - florian.brandes@posteo.de 
+Florian Brandes - florian.brandes@posteo.de 
 
 Project Link: [https://github.com/gador/nix-check-build-merge](https://github.com/gador/nix-check-build-merge)
 

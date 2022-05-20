@@ -20,8 +20,16 @@ def index():  # type: ignore
     packages = nix_cbm.models.Packages.query
     if request.method == "POST":
         # TODO: delegate to worker
-        if request.form.get("check") == "Update":
+        if request.form.get("button1") == "Update hydra-build":
             nix_cbm.refresh_build_status()
+            packages = nix_cbm.models.Packages.query
+            return render_template(
+                "index.html",
+                maintainer=Config.MAINTAINER,
+                packages=packages,
+            )
+        if request.form.get("button2") == "Update maintained packages":
+            nix_cbm.refresh_build_status(reload_maintainer=True)
             packages = nix_cbm.models.Packages.query
             return render_template(
                 "index.html",

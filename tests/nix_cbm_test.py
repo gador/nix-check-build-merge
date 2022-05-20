@@ -373,7 +373,7 @@ class MyTestCase(unittest.TestCase):
         nixcbm.maintained_packages = ["pgadmin"]
         nixcbm.save_maintained_packages_to_db()
         self.assertTrue(insert_or_update.check_for_package())
-        
+
         # re-checking, since the package is now already present
         nixcbm.save_maintained_packages_to_db()
         self.assertTrue(insert_or_update.check_for_package())
