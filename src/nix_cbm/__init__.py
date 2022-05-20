@@ -50,7 +50,7 @@ def _get_build_status_from_json(package_json: list[dict]) -> bool:
     return package_json[0]["success"]
 
 
-class InsertOrUpdate(object):
+class InsertOrUpdate:
     def __init__(self, package: str, hydra_output: dict, result: bool):
         self.package = package
         self.hydra_output = hydra_output
@@ -106,7 +106,8 @@ class InsertOrUpdate(object):
 def refresh_build_status() -> None:
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
-    nixcbm.find_maintained_packages(Config.MAINTAINER)
+    nixcbm.load_maintained_packages_from_database()
+    # nixcbm.update_maintained_packages_list(Config.MAINTAINER)
     nixcbm.check_hydra_status(nixcbm.maintained_packages)
     # TODO: Add other architectures
 
@@ -171,12 +172,9 @@ class NixCbm:
         self.maintained_packages: list[str] = []
         self.hydra_build_status: dict = {}
 
-    def find_maintained_packages(self, maintainer: str = Config.MAINTAINER) -> None:
-        """ "
-        find all occurrences of a given maintainer
-        INPUT: maintainer, string.
-        OUTPUT: package names, List of strings.
-        """
+    def update_maintained_packages_list(
+        self, maintainer: str = Config.MAINTAINER
+    ) -> None:
         logging.info(f"Will look for {maintainer}")
         current_dir = os.path.dirname(os.path.realpath(__file__))
         cmd = [
@@ -196,6 +194,14 @@ class NixCbm:
                 # remove trailing newline at the end
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
+
+    def load_maintained_packages_from_database(self) -> None:
+        list_of_packages_in_db = models.Packages.query.all()
+
+        for package in list_of_packages_in_db:
+            logging.debug(f"found {package} in database")
+            if package.name not in self.maintained_packages:
+                self.maintained_packages.append(package.name)
 
     def check_hydra_status(self, packages: list[str], arch: str = "x86_64-linux") -> None:
         """
