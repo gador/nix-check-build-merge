@@ -103,11 +103,13 @@ class InsertOrUpdate:
         current_package.last_checked = datetime.datetime.now()
 
 
-def refresh_build_status() -> None:
+def refresh_build_status(reload_maintainer: bool = False) -> None:
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
+    if reload_maintainer:
+        nixcbm.update_maintained_packages_list(Config.MAINTAINER)
+        nixcbm.save_maintained_packages_to_db()
     nixcbm.load_maintained_packages_from_database()
-    # nixcbm.update_maintained_packages_list(Config.MAINTAINER)
     nixcbm.check_hydra_status(nixcbm.maintained_packages)
     # TODO: Add other architectures
 
@@ -182,6 +184,20 @@ class NixCbm:
                 # remove trailing newline at the end
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
+
+    def save_maintained_packages_to_db(self) -> None:
+        list_of_packages_in_db = models.Packages.query.all()
+        list_of_packages_in_db_list = []
+        for package in list_of_packages_in_db:
+            list_of_packages_in_db_list.append(package.name)
+
+        for package in self.maintained_packages:
+            if package not in list_of_packages_in_db_list:
+                logging.debug(f"saving {package} to database")
+                insert = InsertOrUpdate(package, {}, False)
+                insert.insert_or_update()
+            else:
+                logging.debug(f"Package {package} already in database. Skipping.")
 
     def load_maintained_packages_from_database(self) -> None:
         list_of_packages_in_db = models.Packages.query.all()
