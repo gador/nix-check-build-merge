@@ -321,11 +321,13 @@ class MyTestCase(unittest.TestCase):
         mock_nixcbm.return_value.maintained_packages = ["pgadmin"]
         mock_nixcbm.return_value.hydra_build_status = {"pgadmin": self.mock_hydra_output}
 
-        self.assertIsNone(nix_cbm.refresh_build_status())
+        self.assertIsNone(nix_cbm.refresh_build_status(reload_maintainer=False))
 
         mock_nixcbm.assert_called_once()
         get_build_status.assert_called_once()
         insertOrUpdate.assert_called_once()
+
+        self.assertIsNone(nix_cbm.refresh_build_status(reload_maintainer=True))
 
     def test_load_maintained_package_list_from_database(self):
         self.setup_db()
@@ -349,7 +351,35 @@ class MyTestCase(unittest.TestCase):
     @mock.patch("subprocess.run", return_value=True)
     def test_find_maintainer(self, mock_subprocess):
         nix_cbm.NixCbm().update_maintained_packages_list(maintainer="test_maintainer")
-    
+
+    def test_save_maintained_packages_to_db(self):
+        """
+        Checks that the maintained list of packages is empty,
+        then fills it and rechecks that it has been committed
+        to the database.
+        """
+
+        self.setup_db()
+        self.setup_config()
+
+        nixcbm = nix_cbm.NixCbm()
+        insert_or_update = nix_cbm.InsertOrUpdate(
+            "pgadmin", self.mock_hydra_output_missing_data, True
+        )
+        assert nixcbm.maintained_packages == []
+        nixcbm.save_maintained_packages_to_db()
+        self.assertFalse(insert_or_update.check_for_package())
+
+        nixcbm.maintained_packages = ["pgadmin"]
+        nixcbm.save_maintained_packages_to_db()
+        self.assertTrue(insert_or_update.check_for_package())
+        
+        # re-checking, since the package is now already present
+        nixcbm.save_maintained_packages_to_db()
+        self.assertTrue(insert_or_update.check_for_package())
+
+        self.tear_down()
+
     @mock.patch("nix_cbm.frontend.app.run")
     @mock.patch("nix_cbm.refresh_build_status")
     @mock.patch("nix_cbm._preflight")
