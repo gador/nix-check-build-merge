@@ -170,6 +170,10 @@ class MyTestCase(unittest.TestCase):
     ]
     basedir = os.path.abspath(os.path.dirname(__file__))
 
+    def setup_config(self):
+        nix_cbm.Config.MAINTAINER = "test_maintainer"
+        nix_cbm.Config.NIXPKGS_WORKDIR = "/"
+
     def setup_db(self):
         """setup_db sets up the database connection
 
@@ -323,6 +327,29 @@ class MyTestCase(unittest.TestCase):
         get_build_status.assert_called_once()
         insertOrUpdate.assert_called_once()
 
+    def test_load_maintained_package_list_from_database(self):
+        self.setup_db()
+        self.setup_config()
+        nixcbm = nix_cbm.NixCbm()
+        nixcbm.load_maintained_packages_from_database()
+        assert nixcbm.maintained_packages == []
+
+        insert_or_update = nix_cbm.InsertOrUpdate(
+            "pgadmin", self.mock_hydra_output_missing_data, True
+        )
+        self.assertIsNone(insert_or_update.insert_or_update())
+        nixcbm.load_maintained_packages_from_database()
+        assert nixcbm.maintained_packages == ["pgadmin"]
+
+        nixcbm.load_maintained_packages_from_database()
+        assert nixcbm.maintained_packages == ["pgadmin"]
+
+        self.tear_down()
+
+    @mock.patch("subprocess.run", return_value=True)
+    def test_find_maintainer(self, mock_subprocess):
+        nix_cbm.NixCbm().update_maintained_packages_list(maintainer="test_maintainer")
+    
     @mock.patch("nix_cbm.frontend.app.run")
     @mock.patch("nix_cbm.refresh_build_status")
     @mock.patch("nix_cbm._preflight")
@@ -421,12 +448,6 @@ class MyTestCase(unittest.TestCase):
         ]
         mock_subprocess.assert_called_with(cmd, capture_output=True, check=True)
         mock_json.assert_called_once()
-
-    @mock.patch("subprocess.run", return_value=True)
-    def test_find_maintainer(self, mock_subprocess):
-        """test_find_maintainer assert the call to subprocess"""
-        nix_cbm.NixCbm().find_maintained_packages(maintainer="test_maintainer")
-        mock_subprocess.assert_called_once()
 
     @mock.patch("nix_cbm.cli")
     def test_main(self, mock_cli):
