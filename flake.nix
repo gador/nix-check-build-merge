@@ -17,6 +17,8 @@
         pkgs = import nixpkgs { inherit system; };
         pythonEnv = pkgs.python310.withPackages (ps:
           with ps; [
+            supervisor
+            gunicorn
             flask
             flask_sqlalchemy
             flask_migrate
@@ -79,6 +81,8 @@
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python310Packages; [
+            supervisor
+            gunicorn
             flask
             flask_sqlalchemy
             flask_migrate
