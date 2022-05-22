@@ -1,0 +1,10 @@
+--- a/nixcbm_start.sh
++++ b/nixcbm_start.sh
+@@ -1,4 +1,4 @@
+-#! /bin/sh
++#! @bash@/bin/sh
+
+-supervisord -n -c supervisord.conf
++@supervisord@ -n -c supervisord.conf
+
+\ No newline at end of file

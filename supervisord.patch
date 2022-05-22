@@ -1,0 +1,10 @@
+--- a/supervisord.conf
++++ b/supervisord.conf
+@@ -19,7 +19,7 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+ serverurl=unix:///tmp/supervisor_nixcbm.sock ; use a unix:// URL  for a unix socket
+
+ [program:gunicorn]
+-command=gunicorn --bind 127.0.0.1:5000 nix_cbm.frontend:app
++command=@gunicorn@ --bind 127.0.0.1:5000 nix_cbm.frontend:app
+ redirect_stderr=true
+ priority=1

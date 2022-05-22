@@ -97,6 +97,15 @@ nix build github:gador/nix-check-build-merge
 nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /path/to/your/local/nixpkgs
 ```
 
+For production use (something not really recommended yet), you can run the flask web frontend with `gunicorn`. For that to work, use:
+```sh
+export MAINTAINER=yourgithubhandle
+export NIXPKGS_ORIGINAL=absolute/path/to/local/nixpkgs
+nix build github:gador/nix-check-build-merge
+result/bin/nixcbm_start
+```
+
+
 nixcbm will create a folder at ~/.config/nix-check-build-merge and save a sqlite database as well as a workdir of your local nicpkgs repo there.
 
 ### Prerequisites
@@ -121,7 +130,7 @@ To display all maintained packages by a given user, issue:
 ```shell
 nixcbm frontend --nixpkgs NIXPKGS_PATH --maintainer MAINTAINER
 ```
-where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo.
+where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo. You can also set the environment variables `MAINTAINER` and `NIXPKGS_ORIGINAL`.
 
 Open your browser and go to http://localhost:5000
 

@@ -77,7 +77,7 @@
         };
         package = pkgs.python310Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
-          version = "0.0.2";
+          version = "0.0.4";
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python310Packages; [
@@ -91,10 +91,27 @@
             pkgs.git
             pkgs.hydra-check
           ];
+          patches = [
+                (pkgs.substituteAll {
+                  src = ./supervisord.patch;
+                  gunicorn = "${pkgs.python310Packages.gunicorn}/bin/gunicorn";
+                })
+                (pkgs.substituteAll {
+                  src = ./nixcbm_start.patch;
+                  bash = "${pkgs.bash}";
+                  supervisord = "${pkgs.python310Packages.supervisor}/bin/supervisord";
+                })              
+              ];
           preCheck = ''
             export HOME=$TMPDIR
           '';
           checkInputs = with pkgs.python310Packages; [ pytestCheckHook ];
+          postInstall = ''
+          mkdir $out/etc
+          cp -v supervisord.conf $out/etc/supervisord.conf
+          substituteInPlace nixcbm_start.sh --replace "supervisord.conf" "$out/etc/supervisord.conf"
+          cp -v nixcbm_start.sh $out/bin/nixxcbm_start
+          '';
         };
       in rec {
         packages.default = package;
