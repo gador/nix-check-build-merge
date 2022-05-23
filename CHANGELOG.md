@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.5
+- add redis
+
 ## 0.0.4
 - flake.lock update
 - added supervisor config
