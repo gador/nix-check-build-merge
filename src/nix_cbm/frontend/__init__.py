@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 
@@ -9,6 +9,12 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+
+@app.route("/tasks", methods=["POST"])
+def run_task():
+    task_type = request.form["type"]
+    return jsonify(task_type), 202
 
 
 @app.route("/", methods=["GET", "POST"])
