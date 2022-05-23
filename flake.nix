@@ -25,6 +25,8 @@
             build
             click
             sphinx
+            rq
+            redis
             
             #test and formatting
             pytest
@@ -56,6 +58,7 @@
             pkgs.git
             pkgs.ripgrep
             pkgs.hydra-check
+            pkgs.redis
             pre-commit
           ];
           shellHook = ''
@@ -77,7 +80,7 @@
         };
         package = pkgs.python310Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
-          version = "0.0.4";
+          version = "0.1.0-alpha";
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python310Packages; [
@@ -88,13 +91,17 @@
             flask_migrate
             build
             click
+            rq
+            redis
             pkgs.git
             pkgs.hydra-check
+            pkgs.redis
           ];
           patches = [
                 (pkgs.substituteAll {
                   src = ./supervisord.patch;
                   gunicorn = "${pkgs.python310Packages.gunicorn}/bin/gunicorn";
+                  redis = "${pkgs.redis}/bin/redis-server";
                 })
                 (pkgs.substituteAll {
                   src = ./nixcbm_start.patch;
