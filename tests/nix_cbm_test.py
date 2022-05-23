@@ -9,6 +9,8 @@ import pytest
 from click.testing import CliRunner
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
+from hypothesis import given
+from hypothesis import strategies as st
 
 import nix_cbm
 
@@ -249,16 +251,25 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(nix_cbm._get_build_status_from_json(self.json_success))
         self.assertFalse(nix_cbm._get_build_status_from_json(self.json_failure))
 
-    def test_insert_or_update_package(self):
+    @given(
+        st.characters(blacklist_categories="CS"), st.characters(blacklist_categories="CS")
+    )
+    def test_insert_or_update_package(self, cs, url):
         """
         Test the database model and connection
         """
 
-        insert_or_update = nix_cbm.InsertOrUpdate("pgadmin", self.mock_hydra_output, True)
+        # rename pgadmin to a generic character to test with hypothesis
+        mock_hydra_output = self.mock_hydra_output.copy()
+        mock_hydra_output["pgadmin"][0]["build_url"] = url
+        mock_hydra_output[cs] = mock_hydra_output["pgadmin"]
+
+        insert_or_update = nix_cbm.InsertOrUpdate(cs, mock_hydra_output, True)
 
         self.setup_db()
+        # custom timestamp format of hydra-check. So we can't easily test with hypothesis
         timestamp = datetime.datetime.fromisoformat("2020-02-19T11:19:06+00:00")
-        buildurl = "https://hydra.nixos.org/build/113209147"
+        buildurl = url
 
         self.assertEqual(insert_or_update.convert_timestamp(), timestamp)
         self.assertEqual(insert_or_update.convert_build_url(), buildurl)
@@ -274,14 +285,17 @@ class MyTestCase(unittest.TestCase):
 
         self.tear_down()
 
-    def test_insert_or_update_package_missing_data(self):
+    @given(st.characters(blacklist_categories="CS"))
+    def test_insert_or_update_package_missing_data(self, cs):
         """
         Test the database model and connection with missing data
         """
 
-        insert_or_update = nix_cbm.InsertOrUpdate(
-            "pgadmin", self.mock_hydra_output_missing_data, True
-        )
+        # rename pgadmin to a generic character to test with hypothesis
+        mock_hydra_output = self.mock_hydra_output_missing_data.copy()
+        mock_hydra_output[cs] = mock_hydra_output["pgadmin"]
+
+        insert_or_update = nix_cbm.InsertOrUpdate(cs, mock_hydra_output, True)
 
         self.setup_db()
 
@@ -329,7 +343,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertIsNone(nix_cbm.refresh_build_status(reload_maintainer=True))
 
-    def test_load_maintained_package_list_from_database(self):
+    # Unicode surrogate don't work with db
+    @given(st.characters(blacklist_categories="CS"))
+    def test_load_maintained_package_list_from_database(self, package_name):
         self.setup_db()
         self.setup_config()
         nixcbm = nix_cbm.NixCbm()
@@ -337,22 +353,25 @@ class MyTestCase(unittest.TestCase):
         assert nixcbm.maintained_packages == []
 
         insert_or_update = nix_cbm.InsertOrUpdate(
-            "pgadmin", self.mock_hydra_output_missing_data, True
+            package_name, self.mock_hydra_output_missing_data, True
         )
         self.assertIsNone(insert_or_update.insert_or_update())
         nixcbm.load_maintained_packages_from_database()
-        assert nixcbm.maintained_packages == ["pgadmin"]
+        assert nixcbm.maintained_packages == [package_name]
 
         nixcbm.load_maintained_packages_from_database()
-        assert nixcbm.maintained_packages == ["pgadmin"]
+        assert nixcbm.maintained_packages == [package_name]
 
         self.tear_down()
 
-    @mock.patch("subprocess.run", return_value=True)
-    def test_find_maintainer(self, mock_subprocess):
-        nix_cbm.NixCbm().update_maintained_packages_list(maintainer="test_maintainer")
+    @given(st.characters())
+    def test_find_maintainer(self, cs):
+        with mock.patch("subprocess.run", return_value=True) as mock_subprocess:
+            nix_cbm.NixCbm().update_maintained_packages_list(maintainer=cs)
+            mock_subprocess.assert_called_once()
 
-    def test_save_maintained_packages_to_db(self):
+    @given(st.characters(blacklist_categories="CS"))
+    def test_save_maintained_packages_to_db(self, cs):
         """
         Checks that the maintained list of packages is empty,
         then fills it and rechecks that it has been committed
@@ -362,15 +381,19 @@ class MyTestCase(unittest.TestCase):
         self.setup_db()
         self.setup_config()
 
+        # rename pgadmin to a generic character to test with hypothesis
+        mock_hydra_output = self.mock_hydra_output_missing_data.copy()
+        mock_hydra_output[cs] = mock_hydra_output["pgadmin"]
+
         nixcbm = nix_cbm.NixCbm()
         insert_or_update = nix_cbm.InsertOrUpdate(
-            "pgadmin", self.mock_hydra_output_missing_data, True
+            cs, self.mock_hydra_output_missing_data, True
         )
         assert nixcbm.maintained_packages == []
         nixcbm.save_maintained_packages_to_db()
         self.assertFalse(insert_or_update.check_for_package())
 
-        nixcbm.maintained_packages = ["pgadmin"]
+        nixcbm.maintained_packages = [cs]
         nixcbm.save_maintained_packages_to_db()
         self.assertTrue(insert_or_update.check_for_package())
 
@@ -380,104 +403,87 @@ class MyTestCase(unittest.TestCase):
 
         self.tear_down()
 
-    @mock.patch("nix_cbm.frontend.app.run")
-    @mock.patch("nix_cbm.refresh_build_status")
-    @mock.patch("nix_cbm._preflight")
-    def test_cli(self, preflight, build_status, frontend):
+    @given(st.characters(blacklist_categories="CS"))
+    def test_cli(self, maintainer):
         """test_cli tests the functionality of the CLI
 
         Here we test the all the combinations of wrong and right
         arguments and their result codes.
-
-        Parameters
-        ----------
-        preflight : _type_
-            call to _preflight
-        build_status : _type_
-            call to refresh_build_status
-        frontend : _type_
-            call to the frontend
         """
         # reset Config values, so we can test the CLI
         old_nixpkgs = nix_cbm.Config.NIXPKGS_ORIGINAL
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
         old_maintainer = nix_cbm.Config.MAINTAINER
         nix_cbm.Config.MAINTAINER = ""
-        with tempfile.TemporaryDirectory() as tmp:
+        with mock.patch("nix_cbm.frontend.app.run") as frontend, mock.patch(
+            "nix_cbm.refresh_build_status"
+        ) as build_status, mock.patch("nix_cbm._preflight") as preflight:
+            with tempfile.TemporaryDirectory() as tmp:
+                runner = CliRunner()
+
+                result = runner.invoke(nix_cbm.cli, ["--nixpkgs", tmp, "update"])
+                assert result.exit_code == 1
+                assert result.output == ""
+
+                result = runner.invoke(
+                    nix_cbm.cli,
+                    ["--nixpkgs", tmp, "--maintainer", maintainer, "update"],
+                )
+                assert result.exit_code == 0
+                assert result.output == ""
+                preflight.assert_called_once()
+                build_status.assert_called_once()
+                preflight.reset_mock()
+                build_status.reset_mock()
+
+                result = runner.invoke(
+                    nix_cbm.cli,
+                    ["--nixpkgs", tmp, "--maintainer", maintainer, "frontend"],
+                )
+                assert result.exit_code == 0
+                assert result.output == ""
+                preflight.assert_called_once()
+                build_status.assert_not_called()
+                frontend.assert_called_once()
+
+                result = runner.invoke(
+                    nix_cbm.cli, ["--nixpkgs", tmp, "--maintainer", maintainer]
+                )
+                assert result.exit_code == 2
+                assert "Error: Missing argument 'ACTION'." in result.output
+
             runner = CliRunner()
 
-            result = runner.invoke(nix_cbm.cli, ["--nixpkgs", tmp, "update"])
+            nix_cbm.Config.NIXPKGS_ORIGINAL = ""
+            result = runner.invoke(nix_cbm.cli, ["--maintainer", maintainer, "update"])
             assert result.exit_code == 1
             assert result.output == ""
 
-            result = runner.invoke(
-                nix_cbm.cli,
-                ["--nixpkgs", tmp, "--maintainer", "test_maintainer", "update"],
-            )
-            assert result.exit_code == 0
-            assert result.output == ""
-            preflight.assert_called_once()
-            build_status.assert_called_once()
-            preflight.reset_mock()
-            build_status.reset_mock()
+            # reset back to not influence other tests
+            nix_cbm.Config.NIXPKGS_ORIGINAL = old_nixpkgs
+            nix_cbm.Config.MAINTAINER = old_maintainer
 
-            result = runner.invoke(
-                nix_cbm.cli,
-                ["--nixpkgs", tmp, "--maintainer", "test_maintainer", "frontend"],
-            )
-            assert result.exit_code == 0
-            assert result.output == ""
-            preflight.assert_called_once()
-            build_status.assert_not_called()
-            frontend.assert_called_once()
-
-            result = runner.invoke(
-                nix_cbm.cli, ["--nixpkgs", tmp, "--maintainer", "test_maintainer"]
-            )
-            assert result.exit_code == 2
-            assert "Error: Missing argument 'ACTION'." in result.output
-
-        runner = CliRunner()
-
-        nix_cbm.Config.NIXPKGS_ORIGINAL = ""
-        result = runner.invoke(nix_cbm.cli, ["--maintainer", "test_maintainer", "update"])
-        assert result.exit_code == 1
-        assert result.output == ""
-
-        # reset back to not influence other tests
-        nix_cbm.Config.NIXPKGS_ORIGINAL = old_nixpkgs
-        nix_cbm.Config.MAINTAINER = old_maintainer
-
-        # result = runner.invoke(nix_cbm.cli, ["--nixpkgs", "nixpkgs", "--maintainer", "test_maintainer", "update"])
-        # assert result.exit_code == 1
-        # assert result.output == ""
-
-    @mock.patch("json.loads")
-    @mock.patch("subprocess.run")
-    def test_check_hydra_status(self, mock_subprocess, mock_json):
+    @given(st.characters())
+    def test_check_hydra_status(self, cs):
         """test_check_hydra_status
 
         checks the call to the hydra script
-
-        Parameters
-        ----------
-        mock_subprocess : _type_
-            actual subprocess call
-        mock_json : _type_
-            the json.loads function which works on the output of the hydra script
         """
-        mock_subprocess.return_value.stdout = True
-        nix_cbm.NixCbm().check_hydra_status(packages=["pgadmin"])
-        cmd = [
-            "hydra-check",
-            "pgadmin",
-            "--channel",
-            "master",
-            "--arch=" + "x86_64-linux",
-            "--json",
-        ]
-        mock_subprocess.assert_called_with(cmd, capture_output=True, check=True)
-        mock_json.assert_called_once()
+        with mock.patch("json.loads") as mock_json, mock.patch(
+            "subprocess.run"
+        ) as mock_subprocess:
+            mock_subprocess.return_value.stdout = True
+            nix_cbm.NixCbm().check_hydra_status(packages=[cs])
+            cmd = [
+                "hydra-check",
+                cs,
+                "--channel",
+                "master",
+                "--arch=" + "x86_64-linux",
+                "--json",
+            ]
+            mock_subprocess.assert_called_with(cmd, capture_output=True, check=True)
+            mock_json.assert_called_once()
 
     @mock.patch("nix_cbm.cli")
     def test_main(self, mock_cli):

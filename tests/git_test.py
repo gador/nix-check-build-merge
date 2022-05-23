@@ -2,6 +2,9 @@ import subprocess
 import unittest
 from unittest import mock
 
+from hypothesis import given
+from hypothesis import strategies as st
+
 from nix_cbm import git
 
 
@@ -11,25 +14,25 @@ class GitTestCase(unittest.TestCase):
         self.assertTrue(git._sh(["pwd"], "/", check=False))
         process.assert_called_with(["pwd"], cwd="/", check=False, text=True)
 
-    @mock.patch(
-        "nix_cbm.git._sh", return_value=subprocess.CompletedProcess(args="", returncode=0)
-    )
-    def test_git_pull(self, mock_sh):
-        self.assertTrue(
-            git.git_pull(repo="test_repo", commit="test_commit", remote="test_remote")
-        )
-        mock_sh.return_value = subprocess.CompletedProcess(args="", returncode=1)
-        self.assertFalse(
-            git.git_pull(repo="test_repo", commit="test_commit", remote="test_remote")
-        )
+    @given(st.characters(), st.characters(), st.characters())
+    def test_git_pull(self, repo, commit, remote):
+        with mock.patch(
+            "nix_cbm.git._sh",
+            return_value=subprocess.CompletedProcess(args="", returncode=0),
+        ) as mock_sh:
+            self.assertTrue(git.git_pull(repo=repo, commit=commit, remote=remote))
+            mock_sh.return_value = subprocess.CompletedProcess(args="", returncode=1)
+            self.assertFalse(git.git_pull(repo=repo, commit=commit, remote=remote))
 
-    @mock.patch(
-        "nix_cbm.git._sh", return_value=subprocess.CompletedProcess(args="", returncode=0)
-    )
-    def test_git_checkout(self, mock_sh):
-        self.assertTrue(git.git_checkout(repo="test_repo", commit="test_commit"))
-        mock_sh.return_value = subprocess.CompletedProcess(args="", returncode=1)
-        self.assertFalse(git.git_checkout(repo="test_repo", commit="test_commit"))
+    @given(st.characters(), st.characters())
+    def test_git_checkout(self, repo, commit):
+        with mock.patch(
+            "nix_cbm.git._sh",
+            return_value=subprocess.CompletedProcess(args="", returncode=0),
+        ) as mock_sh:
+            self.assertTrue(git.git_checkout(repo=repo, commit=commit))
+            mock_sh.return_value = subprocess.CompletedProcess(args="", returncode=1)
+            self.assertFalse(git.git_checkout(repo=repo, commit=commit))
 
     @mock.patch("subprocess.check_output")
     @mock.patch("nix_cbm.git._sh")
