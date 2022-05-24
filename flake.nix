@@ -158,6 +158,7 @@
                 flask_migrate
                 hypothesis
                 redis
+                rq
               ];
             } ''
             mkdir $out

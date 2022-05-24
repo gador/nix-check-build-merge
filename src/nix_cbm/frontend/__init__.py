@@ -1,4 +1,6 @@
-from flask import Flask, jsonify, render_template, request
+from typing import Tuple
+
+from flask import Flask, jsonify, render_template, request, wrappers
 from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 
@@ -12,13 +14,13 @@ migrate = Migrate(app, db)
 
 
 @app.route("/tasks", methods=["POST"])
-def run_task():
+def run_task() -> Tuple[wrappers.Response, int]:
     task_type = request.form["type"]
     return jsonify(task_type), 202
 
 
 @app.route("/", methods=["GET", "POST"])
-def index():  # type: ignore
+def index() -> str:
     # this needs to be offloaded to a different worker
     # also, for now maintainer is hardcoded
     # TODO: add form to enter maintainer

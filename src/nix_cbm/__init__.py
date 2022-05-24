@@ -9,8 +9,10 @@ from typing import Optional
 
 import click
 import flask_migrate  # type: ignore
-import redis
-from rq import Connection, Worker
+
+# remove type ignore when packaged in nixpkgs
+import redis  # type: ignore
+from rq import Connection, Worker  # type: ignore
 
 from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
