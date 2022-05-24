@@ -3,11 +3,16 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import tempfile
 from typing import Optional
 
 import click
 import flask_migrate  # type: ignore
+
+# remove type ignore when packaged in nixpkgs
+import redis  # type: ignore
+from rq import Connection, Worker  # type: ignore
 
 from nix_cbm import checks, frontend, git, models
 from nix_cbm.config import Config
@@ -123,6 +128,14 @@ def main() -> None:
     cli()
 
 
+def run_worker() -> None:
+    redis_url = Config.REDIS_URL
+    redis_connection = redis.from_url(redis_url)
+    with Connection(redis_connection):
+        worker = Worker(Config.QUEUES)
+        worker.work()
+
+
 @click.command()
 @click.option("--nixpkgs", help="path to nixpkgs")
 @click.option("--maintainer", help="maintainer to look for")
@@ -131,8 +144,12 @@ def cli(nixpkgs: str, maintainer: str, action: str) -> None:
     """
     CLI interface for nix-check-build-merge.\n
     Use "update" for checking the build status for all packages belonging to "maintainer"\n
-    Use "frontend" to test the frontend
+    Use "frontend" to test the frontend\n
+    Use "worker" to start redis-worker
     """
+    if action == "worker":
+        run_worker()
+        sys.exit(0)
     if not Config.NIXPKGS_ORIGINAL and not nixpkgs:
         raise LookupError("Please provide a path to nixpkgs")
     if not Config.NIXPKGS_ORIGINAL:

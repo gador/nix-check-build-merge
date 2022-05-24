@@ -5,7 +5,7 @@ basedir = os.path.join(Path.home(), ".config", "nix-check-build-merge")
 nixpkgs_workdir = os.path.join(basedir, "nixpkgs")
 
 
-class Config(object):
+class Config:
     if not os.path.exists(basedir):
         os.makedirs(basedir, exist_ok=True)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -15,3 +15,5 @@ class Config(object):
     NIXPKGS_WORKDIR = os.environ.get("NIXPKGS_WORKDIR") or nixpkgs_workdir
     MAINTAINER = os.environ.get("MAINTAINER") or ""
     NIXPKGS_ORIGINAL = os.environ.get("NIXPKGS") or ""
+    REDIS_URL = os.environ.get("REDIS_URL") or "redis:///"
+    QUEUES = ["default"]

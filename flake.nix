@@ -115,10 +115,10 @@
           '';
           checkInputs = with pkgs.python310Packages; [ pytestCheckHook hypothesis ];
           postInstall = ''
-            mkdir $out/etc
-            cp -v supervisord.conf $out/etc/supervisord.conf
+            substituteInPlace supervisord.conf --replace "command=nixcbm worker" "command=$out/bin/nixcbm worker"
+            install -Dm 0644 supervisord.conf $out/etc/supervisord.conf
             substituteInPlace nixcbm_start.sh --replace "supervisord.conf" "$out/etc/supervisord.conf"
-            cp -v nixcbm_start.sh $out/bin/nixxcbm_start
+            install -Dm 0755 nixcbm_start.sh $out/bin/nixxcbm_start 
           '';
         };
       in
@@ -157,6 +157,8 @@
                 flask_sqlalchemy
                 flask_migrate
                 hypothesis
+                redis
+                rq
               ];
             } ''
             mkdir $out

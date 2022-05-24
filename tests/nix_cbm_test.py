@@ -5,7 +5,6 @@ import unittest
 from unittest import mock
 
 import flask_migrate  # type: ignore
-import pytest
 from click.testing import CliRunner
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy  # type: ignore

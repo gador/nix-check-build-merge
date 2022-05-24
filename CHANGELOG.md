@@ -2,6 +2,7 @@
 
 ## 0.0.5
 - add redis
+- add hypothesis testing
 
 ## 0.0.4
 - flake.lock update
