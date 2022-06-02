@@ -108,14 +108,16 @@ class InsertOrUpdate:
         current_package.last_checked = datetime.datetime.now()
 
 
-def refresh_build_status(reload_maintainer: bool = False) -> None:
+def refresh_build_status(
+    reload_maintainer: bool = False, arch: str = "x86_64-linux"
+) -> None:
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     if reload_maintainer:
         nixcbm.update_maintained_packages_list(Config.MAINTAINER)
         nixcbm.save_maintained_packages_to_db()
     nixcbm.load_maintained_packages_from_database()
-    nixcbm.check_hydra_status(nixcbm.maintained_packages)
+    nixcbm.check_hydra_status(nixcbm.maintained_packages, arch=arch)
     # TODO: Add other architectures
 
     for package, hydra_output in nixcbm.hydra_build_status.items():
@@ -224,7 +226,7 @@ class NixCbm:
             if package.name not in self.maintained_packages:
                 self.maintained_packages.append(package.name)
 
-    def check_hydra_status(self, packages: list[str], arch: str = "x86_64-linux") -> None:
+    def check_hydra_status(self, packages: list[str], arch: str) -> None:
         """
         Check the hydra build status of a set of packages
         Parameters

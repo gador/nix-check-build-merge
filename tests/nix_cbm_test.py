@@ -472,7 +472,7 @@ class MyTestCase(unittest.TestCase):
             "subprocess.run"
         ) as mock_subprocess:
             mock_subprocess.return_value.stdout = True
-            nix_cbm.NixCbm().check_hydra_status(packages=[cs])
+            nix_cbm.NixCbm().check_hydra_status(packages=[cs], arch="x86_64-linux")
             cmd = [
                 "hydra-check",
                 cs,
