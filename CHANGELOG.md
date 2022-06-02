@@ -1,4 +1,8 @@
-# Changelog
+#### [Version 0.1.0](https://gador/nix-check-build-merge/releases/tag/0.1.0) 
+### Implemented Enhancements 
+- Add second page to selectively display failed builds [#27](https://gador/nix-check-build-merge/issues/#27) ([@gador](https://github.com/@gador))
+ 
+ # Changelog
 
 ## 0.0.5
 - add redis
