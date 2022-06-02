@@ -1,4 +1,8 @@
-#### [Version 0.1.0](https://gador/nix-check-build-merge/releases/tag/0.1.0) 
+#### [Version 0.1.1](https://gador/nix-check-build-merge/releases/tag/0.1.1) 
+### Fixed Bugs 
+- Add frontend tests and prepare listing for different architectures [#29](https://gador/nix-check-build-merge/issues/#29) ([@gador](https://github.com/@gador))
+ 
+ #### [Version 0.1.0](https://gador/nix-check-build-merge/releases/tag/0.1.0) 
 ### Implemented Enhancements 
 - Add second page to selectively display failed builds [#27](https://gador/nix-check-build-merge/issues/#27) ([@gador](https://github.com/@gador))
  
