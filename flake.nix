@@ -81,7 +81,7 @@
         };
         package = pkgs.python310Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
-          version = "0.1.0-alpha";
+          version = "0.1.1";
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python310Packages; [

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="nix-check-build-merge",
-    version="0.1.0-alpha",
+    version="0.1.1",
     author="Florian Brandes",
     author_email="florian.brandes@posteo.de",
     description="This project will allow you to check for build failures all the nixpkgs you maintain",

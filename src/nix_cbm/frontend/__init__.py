@@ -12,8 +12,6 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# TODO: Write frontend tests
-
 
 def get_packages(failed: bool = False) -> Tuple:
     """Get packages from db"""
