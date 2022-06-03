@@ -1,4 +1,13 @@
-#### [Version 0.1.1](https://gador/nix-check-build-merge/releases/tag/0.1.1) 
+#### [Version 0.2.0](https://gador/nix-check-build-merge/releases/tag/0.2.0) 
+### Implemented Enhancements 
+- Add option to check different architectures [#34](https://gador/nix-check-build-merge/issues/#34) ([@gador](https://github.com/@gador))
+### Fixed Bugs 
+- bugfix: move to batch mode for sqlite [#31](https://gador/nix-check-build-merge/issues/#31) ([@gador](https://github.com/@gador))
+- upgrade db model to include arch and allow same package names  [#32](https://gador/nix-check-build-merge/issues/#32) ([@gador](https://github.com/@gador))
+### Other Changes 
+- add Config variables for architecture to check [#33](https://gador/nix-check-build-merge/issues/#33) ([@gador](https://github.com/@gador))
+ 
+ #### [Version 0.1.1](https://gador/nix-check-build-merge/releases/tag/0.1.1) 
 ### Fixed Bugs 
 - Add frontend tests and prepare listing for different architectures [#29](https://gador/nix-check-build-merge/issues/#29) ([@gador](https://github.com/@gador))
  
