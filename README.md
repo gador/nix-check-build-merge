@@ -100,7 +100,7 @@ nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubha
 For production use (something not really recommended yet), you can run the flask web frontend with `gunicorn`. For that to work, use:
 ```sh
 export MAINTAINER=yourgithubhandle
-export NIXPKGS_ORIGINAL=absolute/path/to/local/nixpkgs
+export NIXPKGS=absolute/path/to/local/nixpkgs
 nix build github:gador/nix-check-build-merge
 result/bin/nixcbm_start
 ```
@@ -130,7 +130,7 @@ To display all maintained packages by a given user, issue:
 ```shell
 nixcbm frontend --nixpkgs NIXPKGS_PATH --maintainer MAINTAINER
 ```
-where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo. You can also set the environment variables `MAINTAINER` and `NIXPKGS_ORIGINAL`.
+where MAINTAINER is the handle you are looking for and NIXPKGS_PATH is the path to the local nixpkgs repo. You can also set the environment variables `MAINTAINER` and `NIXPKGS`.
 
 Open your browser and go to http://localhost:5000
 
@@ -140,17 +140,17 @@ The first will look in the current nixpkgs repo for all the packages you maintai
 
 ### Important environment variables
 
-- NIXPKGS_WORKDIR : Path to nixpkgs workdir. Defaults to `~/.config/nix-check-build-merge/nixpkgs`
-- MAINTAINER : The maintainer of the nixpkgs to check. **Mandatory**
-- NIXPKGS : Path to the locally cloned nixpkgs repo. **Mandatory** 
-- ARCH_TO_CHECK : Comma separated list of archs to check. Defaults to `x86_64-linux`
-- REDIS_URL : If using a different reddis instance, the url can be set here. Defaults to `redis:///`
+- `NIXPKGS_WORKDIR` : Path to nixpkgs workdir. Defaults to `~/.config/nix-check-build-merge/nixpkgs`
+- `MAINTAINER` : The maintainer of the nixpkgs to check. **Mandatory**
+- `NIXPKGS` : Path to the locally cloned nixpkgs repo. **Mandatory** 
+- `ARCH_TO_CHECK` : Comma separated list of archs to check. Defaults to `x86_64-linux`
+- `REDIS_URL` : If using a different reddis instance, the url can be set here. Defaults to `redis:///`
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Changelog
 
-For a detailed list of changes see <a href="https://github.com/gador/nix-check-build-merge/CHANGELOG.md">CHANGELOG.md</a>
+For a detailed list of changes see <a href="https://github.com/gador/nix-check-build-merge/blob/main/CHANGELOG.md">CHANGELOG.md</a>
 
 <!-- ROADMAP -->
 ## Roadmap
