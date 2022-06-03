@@ -16,7 +16,7 @@ class Config:
     MAINTAINER = os.environ.get("MAINTAINER") or ""
     NIXPKGS_ORIGINAL = os.environ.get("NIXPKGS") or ""
     if os.environ.get("ARCH_TO_CHECK"):
-        ARCH_TO_CHECK = str(os.environ.get("ARCH_TO_CHECK")).split(",") 
+        ARCH_TO_CHECK = str(os.environ.get("ARCH_TO_CHECK")).split(",")
     else:
         ARCH_TO_CHECK = ["x86_64-linux"]
     REDIS_URL = os.environ.get("REDIS_URL") or "redis:///"
