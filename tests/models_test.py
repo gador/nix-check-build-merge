@@ -15,18 +15,21 @@ class ModelTestCase(unittest.TestCase):
         st.characters(),
         st.dictionaries(st.characters(), st.characters()),
         st.datetimes(),
+        st.characters(),
     )
-    def test_repr(self, cs, url, di, dates):
+    def test_repr(self, cs, url, di, dates, arch):
         db_entry = models.Packages(
             name=cs,
             hydra_status=di,
             build_url=url,
+            arch=arch,
             timestamp=dates,
             last_checked=dates,
         )
         assert db_entry.name == cs
         assert db_entry.hydra_status == di
         assert db_entry.build_url == url
+        assert db_entry.arch == arch
         assert db_entry.timestamp == dates
         assert db_entry.last_checked == dates
 

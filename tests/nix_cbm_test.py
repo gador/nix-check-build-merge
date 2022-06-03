@@ -263,7 +263,9 @@ class MyTestCase(unittest.TestCase):
         mock_hydra_output["pgadmin"][0]["build_url"] = url
         mock_hydra_output[cs] = mock_hydra_output["pgadmin"]
 
-        insert_or_update = nix_cbm.InsertOrUpdate(cs, mock_hydra_output, True)
+        insert_or_update = nix_cbm.InsertOrUpdate(
+            cs, mock_hydra_output, True, "x86_64-linux"
+        )
 
         self.setup_db()
         # custom timestamp format of hydra-check. So we can't easily test with hypothesis
@@ -294,7 +296,9 @@ class MyTestCase(unittest.TestCase):
         mock_hydra_output = self.mock_hydra_output_missing_data.copy()
         mock_hydra_output[cs] = mock_hydra_output["pgadmin"]
 
-        insert_or_update = nix_cbm.InsertOrUpdate(cs, mock_hydra_output, True)
+        insert_or_update = nix_cbm.InsertOrUpdate(
+            cs, mock_hydra_output, True, "x86_64-linux"
+        )
 
         self.setup_db()
 
@@ -352,7 +356,7 @@ class MyTestCase(unittest.TestCase):
         assert nixcbm.maintained_packages == []
 
         insert_or_update = nix_cbm.InsertOrUpdate(
-            package_name, self.mock_hydra_output_missing_data, True
+            package_name, self.mock_hydra_output_missing_data, True, "x86_64-linux"
         )
         self.assertIsNone(insert_or_update.insert_or_update())
         nixcbm.load_maintained_packages_from_database()
@@ -386,7 +390,10 @@ class MyTestCase(unittest.TestCase):
 
         nixcbm = nix_cbm.NixCbm()
         insert_or_update = nix_cbm.InsertOrUpdate(
-            cs, self.mock_hydra_output_missing_data, True
+            cs,
+            self.mock_hydra_output_missing_data,
+            True,
+            "x86_64-linux",
         )
         assert nixcbm.maintained_packages == []
         nixcbm.save_maintained_packages_to_db()

@@ -13,8 +13,15 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+def init_app() -> None:
+    """makes sure preflight ran"""
+    if not Config.PREFLIGHT_DONE:
+        nix_cbm._preflight(Config.NIXPKGS_ORIGINAL)
+
+
 def get_packages(failed: bool = False) -> Tuple:
     """Get packages from db"""
+    init_app()
     if failed:
         return nix_cbm.models.Packages.query.filter(
             nix_cbm.models.Packages.hydra_status == False  # noqa: E712
@@ -35,7 +42,8 @@ def failed() -> str:
     if request.method == "POST":
         # TODO: delegate to worker
         if request.form.get("button1") == "Update hydra-build":
-            nix_cbm.refresh_build_status()
+            for arch in Config.ARCH_TO_CHECK:
+                nix_cbm.refresh_build_status(arch=arch)
             packages = get_packages(failed=True)
             return render_template(
                 "failed.html",
@@ -43,7 +51,8 @@ def failed() -> str:
                 packages=packages,
             )
         if request.form.get("button2") == "Update maintained packages":
-            nix_cbm.refresh_build_status(reload_maintainer=True)
+            for arch in Config.ARCH_TO_CHECK:
+                nix_cbm.refresh_build_status(reload_maintainer=True, arch=arch)
             packages = get_packages(failed=True)
             return render_template(
                 "failed.html",
@@ -67,7 +76,8 @@ def index() -> str:
     if request.method == "POST":
         # TODO: delegate to worker
         if request.form.get("button1") == "Update hydra-build":
-            nix_cbm.refresh_build_status()
+            for arch in Config.ARCH_TO_CHECK:
+                nix_cbm.refresh_build_status(arch=arch)
             packages = get_packages()
             return render_template(
                 "index.html",
@@ -75,7 +85,8 @@ def index() -> str:
                 packages=packages,
             )
         if request.form.get("button2") == "Update maintained packages":
-            nix_cbm.refresh_build_status(reload_maintainer=True)
+            for arch in Config.ARCH_TO_CHECK:
+                nix_cbm.refresh_build_status(reload_maintainer=True, arch=arch)
             packages = get_packages()
             return render_template(
                 "index.html",

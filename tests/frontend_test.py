@@ -15,6 +15,7 @@ class FrontendTestCase(unittest.TestCase):
     def setup_config(self):
         nix_cbm.Config.MAINTAINER = "test_maintainer"
         nix_cbm.Config.NIXPKGS_WORKDIR = "/"
+        nix_cbm.Config.TESTING = True
 
     def setup_db(self):
         """setup_db sets up the database connection
@@ -42,6 +43,7 @@ class FrontendTestCase(unittest.TestCase):
         # self.db.init_app(self.app)
         with nix_cbm.frontend.app.app_context():
             nix_cbm.frontend.db.drop_all()
+        nix_cbm.Config.TESTING = False
 
     def test_main_age(self):
         # Create a test client using the Flask application configured for testing
