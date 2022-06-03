@@ -31,6 +31,8 @@ def _preflight(nixpkgs_path: str) -> bool:
     OUTPUT: ok, bool.
     """
     logging.debug("running preflight checklist")
+    if Config.TESTING:
+        return True
     missing_programs = checks.check_tools()
     if missing_programs:
         raise LookupError(
@@ -46,7 +48,7 @@ def _preflight(nixpkgs_path: str) -> bool:
             flask_migrate.upgrade(
                 directory=os.path.join(basedir, "migrations"), revision="head"
             )
-    # git.git_checkout(repo=Config.NIXPKGS_WORKDIR)
+    Config.PREFLIGHT_DONE = True
     return True
 
 
@@ -56,10 +58,11 @@ def _get_build_status_from_json(package_json: list[dict]) -> bool:
 
 
 class InsertOrUpdate:
-    def __init__(self, package: str, hydra_output: dict, result: bool):
+    def __init__(self, package: str, hydra_output: dict, result: bool, arch: str):
         self.package = package
         self.hydra_output = hydra_output
         self.result = result
+        self.arch = arch
 
     def convert_timestamp(self) -> Optional[datetime.datetime]:
 
@@ -79,7 +82,7 @@ class InsertOrUpdate:
         return build_url
 
     def check_for_package(self) -> models.Packages:
-        return models.Packages.query.filter_by(name=self.package).first()
+        return models.Packages.query.filter_by(name=self.package, arch=self.arch).first()
 
     def insert_or_update(self) -> None:
         if self.check_for_package():
@@ -94,6 +97,7 @@ class InsertOrUpdate:
         db_entry = models.Packages(
             name=self.package,
             hydra_status=self.result,
+            arch=self.arch,
             build_url=self.convert_build_url(),
             timestamp=self.convert_timestamp(),
             last_checked=datetime.datetime.now(),
@@ -103,6 +107,7 @@ class InsertOrUpdate:
     def update(self) -> None:
         current_package = self.check_for_package()
         current_package.hydra_status = self.result
+        current_package.arch = self.arch
         current_package.build_url = self.convert_build_url()
         current_package.timestamp = self.convert_timestamp()
         current_package.last_checked = datetime.datetime.now()
@@ -111,6 +116,7 @@ class InsertOrUpdate:
 def refresh_build_status(
     reload_maintainer: bool = False, arch: str = "x86_64-linux"
 ) -> None:
+    logging.info(f"Refreshing build status for for arch {arch}")
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     if reload_maintainer:
@@ -122,7 +128,7 @@ def refresh_build_status(
 
     for package, hydra_output in nixcbm.hydra_build_status.items():
         result = _get_build_status_from_json(hydra_output[package])
-        insert_or_update = InsertOrUpdate(package, hydra_output, result)
+        insert_or_update = InsertOrUpdate(package, hydra_output, result, arch)
         insert_or_update.insert_or_update()
 
 
@@ -206,14 +212,19 @@ class NixCbm:
 
     def save_maintained_packages_to_db(self) -> None:
         list_of_packages_in_db = models.Packages.query.all()
+        # unique list of package names
         list_of_packages_in_db_list = []
         for package in list_of_packages_in_db:
-            list_of_packages_in_db_list.append(package.name)
+            # there will be several packages with the same name due to different
+            # built architectures. We therefore check whether it was already added
+            if package.name not in list_of_packages_in_db_list:
+                list_of_packages_in_db_list.append(package.name)
 
         for package in self.maintained_packages:
             if package not in list_of_packages_in_db_list:
                 logging.debug(f"saving {package} to database")
-                insert = InsertOrUpdate(package, {}, False)
+                # we default to x86_64-linux architecture
+                insert = InsertOrUpdate(package, {}, False, "x86_64-linux")
                 insert.insert_or_update()
             else:
                 logging.debug(f"Package {package} already in database. Skipping.")

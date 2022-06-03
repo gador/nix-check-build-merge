@@ -138,9 +138,19 @@ You have two options: "Update maintained packages" and "Updata hydra-build".
 
 The first will look in the current nixpkgs repo for all the packages you maintain. The second option additionally will check online for the build status.
 
+### Important environment variables
+
+- NIXPKGS_WORKDIR : Path to nixpkgs workdir. Defaults to `~/.config/nix-check-build-merge/nixpkgs`
+- MAINTAINER : The maintainer of the nixpkgs to check. **Mandatory**
+- NIXPKGS : Path to the locally cloned nixpkgs repo. **Mandatory** 
+- ARCH_TO_CHECK : Comma separated list of archs to check. Defaults to `x86_64-linux`
+- REDIS_URL : If using a different reddis instance, the url can be set here. Defaults to `redis:///`
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+## Changelog
 
+For a detailed list of changes see <a href="https://github.com/gador/nix-check-build-merge/CHANGELOG.md">CHANGELOG.md</a>
 
 <!-- ROADMAP -->
 ## Roadmap

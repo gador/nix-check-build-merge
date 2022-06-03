@@ -26,6 +26,7 @@
             <tr>
                 <th>Package name</th>
                 <th>Hydra Build Status</th>
+                <th>Architecture</th>
                 <th>Build URL</th>
                 <th>Timestamp</th>
                 <th>Last checked</th>
@@ -36,6 +37,7 @@
             <tr>
                 <td>{{ package.name }}</td>
                 <td>{{ package.hydra_status }}</td>
+                <td>{{ package.arch }}</td>
                 <td>
                     <a href="{{ package.build_url }}" target="_blank">{{ package.build_url }}</a>
                 </td>
