@@ -17,7 +17,7 @@ class ModelTestCase(unittest.TestCase):
         st.datetimes(),
         st.characters(),
     )
-    def test_repr(self, cs, url, di, dates, arch):
+    def test_package_repr(self, cs, url, di, dates, arch):
         db_entry = models.Packages(
             name=cs,
             hydra_status=di,
@@ -34,6 +34,13 @@ class ModelTestCase(unittest.TestCase):
         assert db_entry.last_checked == dates
 
         assert repr(db_entry) == f"<Package {cs}>"
+
+    @given(st.characters(), st.characters())
+    def test_config_repr(self, cs, path):
+        db_entry = models.PersistentConfig(maintainer=cs, nixpkgs_path=path)
+        assert db_entry.maintainer == cs
+        assert db_entry.nixpkgs_path == path
+        assert repr(db_entry) == f"<Maintainer {cs}, Path {path}>"
 
 
 if __name__ == "__main__":
