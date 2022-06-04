@@ -48,6 +48,8 @@ def _preflight(nixpkgs_path: str) -> bool:
             flask_migrate.upgrade(
                 directory=os.path.join(basedir, "migrations"), revision="head"
             )
+    # Make sure Maintainer and nixpkgs path is saved to db and updated if changed
+    restore_or_save_config()
     Config.PREFLIGHT_DONE = True
     return True
 
@@ -55,6 +57,67 @@ def _preflight(nixpkgs_path: str) -> bool:
 def _get_build_status_from_json(package_json: list[dict]) -> bool:
     # the 0 implies the most recent build
     return package_json[0]["success"]
+
+
+def load_maintainer_from_db() -> None:
+    """Load MAINTAINER from db.
+    Will override any existing values
+    """
+    result = models.PersistentConfig.query.filter_by(id=0).first()
+    if result and result.maintainer:
+        Config.MAINTAINER = result.maintainer
+
+
+def save_maintainer_to_db(maintainer: str) -> None:
+    if maintainer:
+        result = models.PersistentConfig.query.filter_by(id=0).first()
+        if not result:
+            # new db entry
+            db_entry = models.PersistentConfig(
+                id=0,
+                maintainer=maintainer,
+            )
+            frontend.db.session.add(db_entry)
+        else:
+            result.maintainer = maintainer
+        frontend.db.session.commit()
+
+
+def load_nixpkgs_from_db() -> None:
+    """load NIXPKGS_ORIGINAL path from db.
+    Will override any existing values
+    """
+    result = models.PersistentConfig.query.filter_by(id=0).first()
+    if result and result.nixpkgs_path:
+        Config.NIXPKGS_ORIGINAL = result.nixpkgs_path
+
+
+def save_nixpkgs_to_db(nixpkgs: str) -> None:
+    if nixpkgs:
+        result = models.PersistentConfig.query.filter_by(id=0).first()
+        if not result:
+            # new db entry
+            db_entry = models.PersistentConfig(
+                id=0,
+                nixpkgs_path=nixpkgs,
+            )
+            frontend.db.session.add(db_entry)
+        else:
+            result.nixpkgd_path = nixpkgs
+        frontend.db.session.commit()
+
+
+def restore_or_save_config() -> None:
+    """Restores config, if available.
+    Saves config values if already present"""
+    if not Config.MAINTAINER:
+        load_maintainer_from_db()
+    else:
+        save_maintainer_to_db(Config.MAINTAINER)
+    if not Config.NIXPKGS_ORIGINAL:
+        load_nixpkgs_from_db()
+    else:
+        save_nixpkgs_to_db(Config.NIXPKGS_ORIGINAL)
 
 
 class InsertOrUpdate:

@@ -174,6 +174,7 @@ class MyTestCase(unittest.TestCase):
     def setup_config(self):
         nix_cbm.Config.MAINTAINER = "test_maintainer"
         nix_cbm.Config.NIXPKGS_WORKDIR = "/"
+        nix_cbm.Config.NIXPKGS_ORIGINAL = ""
 
     def setup_db(self):
         """setup_db sets up the database connection
@@ -231,13 +232,17 @@ class MyTestCase(unittest.TestCase):
         nixpkgs_dir : _type_
             checks for the existence of the nixpkgs path provided
         """
+        self.setup_config()
+        self.setup_db()
         self.assertTrue(nix_cbm._preflight("/"))
         nixpkgs_dir.assert_called_once()
         check_tools.assert_called_once()
         git_worktree.assert_called_once()
         git_pull.assert_called_once()
         mock_config.assert_called_once()
-        upgrade.assert_called_once()
+        # called twice. Once in this setup, once inside _preflight function
+        assert upgrade.call_count == 2
+        self.tear_down()
 
     @mock.patch("nix_cbm.checks.check_tools", return_value=["missing_program"])
     def test_preflight_missing_programs(self, check_tools):
@@ -249,6 +254,86 @@ class MyTestCase(unittest.TestCase):
         """test_get_build_stats test the result of the build status from json"""
         self.assertTrue(nix_cbm._get_build_status_from_json(self.json_success))
         self.assertFalse(nix_cbm._get_build_status_from_json(self.json_failure))
+
+    @given(st.characters(blacklist_categories="CS"))
+    def test_load_maintainer_from_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.MAINTAINER == "test_maintainer"
+        nix_cbm.load_maintainer_from_db()
+        # don't override if no maintainer is present in db
+        assert nix_cbm.Config.MAINTAINER == "test_maintainer"
+
+        db_entry = nix_cbm.models.PersistentConfig(
+            id=0,
+            maintainer=cs,
+        )
+        nix_cbm.frontend.db.session.add(db_entry)
+        nix_cbm.frontend.db.session.commit()
+
+        nix_cbm.load_maintainer_from_db()
+        assert nix_cbm.Config.MAINTAINER == cs
+
+        nix_cbm.frontend.db.drop_all()
+        self.tear_down()
+
+        # reset config
+        self.setup_config()
+
+    @given(st.characters(blacklist_categories="CS"))
+    def test_save_maintainer_to_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.MAINTAINER == "test_maintainer"
+        nix_cbm.save_maintainer_to_db(cs)
+        result = nix_cbm.models.PersistentConfig.query.filter_by(maintainer=cs).first()
+        self.assertEqual(result.maintainer, cs)
+
+        self.tear_down()
+        self.setup_config()
+
+    @given(st.characters(blacklist_categories="CS"))
+    def test_save_nixpkgs_to_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.NIXPKGS_ORIGINAL == ""
+        nix_cbm.save_nixpkgs_to_db(cs)
+        result = nix_cbm.models.PersistentConfig.query.filter_by(nixpkgs_path=cs).first()
+        self.assertEqual(result.nixpkgs_path, cs)
+
+        self.tear_down()
+        self.setup_config()
+
+    @given(st.characters(blacklist_categories="CS"))
+    def test_load_nixpkgs_from_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.NIXPKGS_ORIGINAL == ""
+        nix_cbm.load_nixpkgs_from_db()
+        nix_cbm.Config.NIXPKGS_ORIGINAL = "testpath"
+        # don't override if no path is set
+        assert nix_cbm.Config.NIXPKGS_ORIGINAL == "testpath"
+
+        db_entry = nix_cbm.models.PersistentConfig(
+            id=0,
+            nixpkgs_path=cs,
+        )
+        nix_cbm.frontend.db.session.add(db_entry)
+        nix_cbm.frontend.db.session.commit()
+
+        # loading from db should override existing values
+        nix_cbm.load_nixpkgs_from_db()
+        assert nix_cbm.Config.NIXPKGS_ORIGINAL == cs
+
+        nix_cbm.frontend.db.drop_all()
+        self.tear_down()
+
+        # reset config
+        self.setup_config()
 
     @given(
         st.characters(blacklist_categories="CS"), st.characters(blacklist_categories="CS")

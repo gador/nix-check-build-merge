@@ -12,3 +12,12 @@ class Packages(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return "<Package {}>".format(self.name)
+
+
+class PersistentConfig(db.Model):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+    maintainer = db.Column(db.String(64), index=True)
+    nixpkgs_path = db.Column(db.String(256))
+
+    def __repr__(self) -> str:
+        return f"<Maintainer {self.maintainer}, Path {self.nixpkgs_path}>"
