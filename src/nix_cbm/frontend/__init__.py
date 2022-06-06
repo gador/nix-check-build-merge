@@ -26,6 +26,11 @@ def config_is_set() -> bool:
     """Check, whether maintainer and nixpkgs path are set"""
     if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
         return True
+    # not set, so try loading from database
+    nix_cbm.restore_or_save_config()
+    # now, try again
+    if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
+        return True
     return False
 
 
@@ -95,6 +100,9 @@ def settings() -> Union[str, Response]:
 
 @app.route("/failed", methods=["GET", "POST"])
 def failed() -> Union[str, Response]:
+    # check for set maintainer and nixpkgs path first
+    if not config_is_set():
+        return redirect("/settings", code=302)
     packages = get_packages(failed=True)
     if request.method == "POST":
         # TODO: delegate to worker
