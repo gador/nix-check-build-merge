@@ -11,4 +11,10 @@ jobs:
       with:
         nix_path: |
           nixpkgs=channel:nixos-unstable
-    - run: nix flake check --print-build-logs
+    - run: |
+        nix build -L .#checks.x86_64-linux.pytest
+        cp -v result/.coverage .
+        ROOTPATH=$(cat result/srcpath)
+        nix run nixpkgs#python310Packages.coveralls -- --service=github --basedir=$ROOTPATH --srcdir=src
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

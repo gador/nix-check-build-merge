@@ -159,6 +159,7 @@
                 hypothesis
                 redis
                 rq
+                coveralls
               ];
             } ''
             mkdir $out
@@ -169,6 +170,8 @@
             export HOME=$TMPDIR
             # don't use cache dir, since it is read only with nix
             python -m pytest ${./.} -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.coveragerc}
+            cp -v .coverage $out/.coverage
+            echo ${./src} > $out/srcpath
           '';
           mypy = pkgs.runCommand "mypy"
             {
