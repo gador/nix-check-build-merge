@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<main>
+    <h1>Nix Check Build Merge</h1>
+    <p class="fs-5 col-md-8">Settings for Nix Check Build Merge</p>
+    <div class="mb-5">
+        <form method="post" action="/settings">
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-default">Maintainer:</span>
+                <input type="text" class="form-control" aria-label="Maintainer" aria-describedby="inputGroup-sizing-default" name="maintainer_textbox" value="{{ maintainer }}"/>
+                <span class="input-group-text" id="inputGroup-sizing-default">Nixpkgs path:</span>
+                <input type="text" class="form-control" aria-label="Path" aria-describedby="inputGroup-sizing-default" name="path_textbox" value="{{ path }}"/>
+                <input type="submit" value="Save settings" name="button" class="btn btn-primary"/>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+
+
+
+
+
