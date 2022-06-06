@@ -183,11 +183,11 @@ def refresh_build_status(
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     if reload_maintainer:
+        nixcbm.clean_maintained_packages()
         nixcbm.update_maintained_packages_list(Config.MAINTAINER)
         nixcbm.save_maintained_packages_to_db()
     nixcbm.load_maintained_packages_from_database()
     nixcbm.check_hydra_status(nixcbm.maintained_packages, arch=arch)
-    # TODO: Add other architectures
 
     for package, hydra_output in nixcbm.hydra_build_status.items():
         result = _get_build_status_from_json(hydra_output[package])
@@ -272,6 +272,11 @@ class NixCbm:
                 # remove trailing newline at the end
                 stdout = f.read().replace("\n", "")
                 self.maintained_packages = stdout.split(",")
+
+    def clean_maintained_packages(self) -> None:
+        """Clear list of maintained packages from database and package list"""
+        self.maintained_packages = []
+        models.Packages.query.delete()
 
     def save_maintained_packages_to_db(self) -> None:
         list_of_packages_in_db = models.Packages.query.all()
