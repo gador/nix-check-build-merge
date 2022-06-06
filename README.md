@@ -10,6 +10,7 @@
 -->
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+[![Coverage][coverage-shield]][coverage-url]
 
 
 <br />
@@ -230,5 +231,7 @@ Project Link: [https://github.com/gador/nix-check-build-merge](https://github.co
 [issues-shield]: https://img.shields.io/github/issues/gador/nix-check-build-merge.svg?style=for-the-badge
 [issues-url]: https://github.com/gador/nix-check-build-merge/issues
 [license-shield]: https://img.shields.io/github/license/gador/nix-check-build-merge.svg?style=for-the-badge
+[coverage-shield]: https://img.shields.io/coveralls/github/gador/nix-check-build-merge.svg?style=for-the-badge
+[coverage-url]: https://coveralls.io/github/gador/nix-check-build-merge
 [license-url]: https://github.com/gador/nix-check-build-merge/blob/master/LICENSE.txt
 [product-screenshot]: images/screenshot.jpg
