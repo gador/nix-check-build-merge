@@ -281,6 +281,33 @@ class MyTestCase(unittest.TestCase):
         # reset config
         self.setup_config()
 
+    def test_clean_maintained_packages(self):
+        self.setup_config()
+        self.setup_db()
+        list_of_packages_in_db_list = []
+        nixcbm = nix_cbm.NixCbm()
+        nixcbm.maintained_packages = ["pgadmin4"]
+        nixcbm.save_maintained_packages_to_db()
+        list_of_packages_in_db = nix_cbm.models.Packages.query.all()
+        for package in list_of_packages_in_db:
+            list_of_packages_in_db_list.append(package.name)
+        assert "pgadmin4" in list_of_packages_in_db_list
+        assert "pgadmin4" in nixcbm.maintained_packages
+
+        nixcbm.clean_maintained_packages()
+        list_of_packages_in_db_list = []
+        list_of_packages_in_db = nix_cbm.models.Packages.query.all()
+        for package in list_of_packages_in_db:
+            list_of_packages_in_db_list.append(package.name)
+        assert "pgadmin4" not in list_of_packages_in_db_list
+        assert "pgadmin4" not in nixcbm.maintained_packages
+
+        nix_cbm.frontend.db.drop_all()
+        self.tear_down()
+
+        # reset config
+        self.setup_config()
+
     @given(st.characters(blacklist_categories="CS"))
     def test_save_maintainer_to_db(self, cs):
         self.setup_config()
