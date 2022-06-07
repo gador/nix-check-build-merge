@@ -38,7 +38,10 @@ def preflight(nixpkgs_path: str) -> bool:
         raise LookupError(
             f"The following programs are missing: + ${str(missing_programs)}"
         )
-    checks.check_nixpkgs_dir(nixpkgs_path)
+    if not checks.check_nixpkgs_dir(nixpkgs_path):
+        raise NotADirectoryError(
+            f"The following path doesn't seem to be a nixpks directory: {str(nixpkgs_path)}"
+        )
     git.git_worktree(repo=nixpkgs_path, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
     git.git_pull(repo=Config.NIXPKGS_WORKDIR)
     check_for_database()
