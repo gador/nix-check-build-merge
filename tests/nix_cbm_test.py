@@ -203,6 +203,28 @@ class MyTestCase(unittest.TestCase):
         with nix_cbm.frontend.app.app_context():
             nix_cbm.frontend.db.drop_all()
 
+    @mock.patch("nix_cbm.checks.check_nixpkgs_dir", return_value=False)
+    @mock.patch("nix_cbm.checks.check_tools", return_value=[])
+    def test_preflight_wrong_nixpkgs(self, check_tools, nixpkgs_dir):
+        """test_preflight with wrong nixpkgs dir
+
+        this will test the preflight call and mock all other function
+        calls coming from here.
+
+        Parameters
+        ----------
+        check_tools : _type_
+            call to check_tools (checks for existence of all needed tools)
+        nixpkgs_dir : _type_
+            checks for the existence of the nixpkgs path provided
+        """
+        self.setup_config()
+        self.setup_db()
+        self.assertRaises(NotADirectoryError, nix_cbm.preflight, "/")
+        check_tools.assert_called_once()
+        nixpkgs_dir.assert_called_once()
+        self.tear_down()
+
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
     @mock.patch("nix_cbm.git.git_worktree")
     @mock.patch("nix_cbm.git.git_pull")
@@ -230,10 +252,13 @@ class MyTestCase(unittest.TestCase):
         self.setup_config()
         self.setup_db()
         self.assertTrue(nix_cbm.preflight("/"))
-        nixpkgs_dir.assert_called_once()
+        nixpkgs_dir.assert_called_with("/")
         check_tools.assert_called_once()
+        git_worktree.assert_called_with(
+            repo="/", nixpkgs_dir=nix_cbm.Config.NIXPKGS_WORKDIR
+        )
         git_worktree.assert_called_once()
-        git_pull.assert_called_once()
+        git_pull.assert_called_with(repo=nix_cbm.Config.NIXPKGS_WORKDIR)
         upgrade.assert_called_once()
         self.tear_down()
 
