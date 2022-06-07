@@ -60,7 +60,7 @@ def input_sanitizer(input: str, which: str) -> Union[str, None]:
             return None
         # return match.group(0) if match else None
     elif which == "path":
-        return input if os.path.exists(input) else None
+        return input if os.path.exists(os.path.normpath(input)) else None
     else:
         raise ValueError(f"wrong argument called {which}")
 
