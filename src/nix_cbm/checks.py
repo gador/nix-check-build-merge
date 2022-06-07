@@ -42,5 +42,5 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     version = os.path.exists(os.path.join(nixpkgs_path, ".version"))
     if git_dir and default_nix and version:
         return True
-    logging.error(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
-    raise LookupError("Not a nixpkgs repository")
+    logging.warning(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
+    return False

@@ -21,7 +21,7 @@ class CheckTestCase(unittest.TestCase):
         assert 3 == path.call_count
 
     def test_check_nixpkgs_dir_not_found(self):
-        self.assertRaises(LookupError, checks.check_nixpkgs_dir, "/")
+        self.assertFalse(checks.check_nixpkgs_dir("/"))
 
 
 if __name__ == "__main__":

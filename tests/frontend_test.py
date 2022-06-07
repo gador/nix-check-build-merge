@@ -153,6 +153,13 @@ class FrontendTestCase(unittest.TestCase):
             assert response.status_code == 405
             assert b"Not Allowed" in response.data
 
+    @mock.patch("nix_cbm.frontend.config_is_set", return_value=False)
+    def test_failed_page_redirect(self, mock_config_is_set):
+        with nix_cbm.frontend.app.test_client() as test_client:
+            response = test_client.get("/failed")
+            assert response.status_code == 302
+            mock_config_is_set.assert_called_once()
+
     @mock.patch("nix_cbm.refresh_build_status")
     def test_failed_page_button1(self, refresh_build):
         with nix_cbm.frontend.app.test_client() as test_client:
@@ -183,7 +190,8 @@ class FrontendTestCase(unittest.TestCase):
             assert b"Built failures from packages maintained by" in response.data
             assert b"Nix Check Build Merge on GitHub" in response.data
 
-    def test_settings_page(self):
+    @mock.patch("nix_cbm.checks.check_nixpkgs_dir", return_value=True)
+    def test_settings_page(self, check_nixpkgs_dir):
         # Create a test client using the Flask application configured for testing
         with nix_cbm.frontend.app.test_client() as test_client:
             response = test_client.get("/settings")
@@ -203,6 +211,7 @@ class FrontendTestCase(unittest.TestCase):
             assert response.status_code == 302
             self.assertEqual(nix_cbm.Config.MAINTAINER, "new_maintainer")
             self.assertEqual(nix_cbm.Config.NIXPKGS_ORIGINAL, "/")
+            check_nixpkgs_dir.assert_called_once()
 
     def test_settings_page_partial_info(self):
         with nix_cbm.frontend.app.test_client() as test_client:
