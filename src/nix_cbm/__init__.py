@@ -106,7 +106,7 @@ def save_nixpkgs_to_db(nixpkgs: str) -> None:
             )
             frontend.db.session.add(db_entry)
         else:
-            result.nixpkgd_path = nixpkgs
+            result.nixpkgs_path = nixpkgs
         frontend.db.session.commit()
 
 
