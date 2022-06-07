@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Tuple, Union
 
@@ -60,9 +59,8 @@ def input_sanitizer(input: str, which: str) -> Union[str, None]:
             return None
         # return match.group(0) if match else None
     elif which == "path":
-        if os.path.exists(os.path.normpath(input)):
-            if nix_cbm.checks.check_nixpkgs_dir(input):
-                return input
+        if nix_cbm.checks.check_nixpkgs_dir(input):
+            return input
         return None
     else:
         raise ValueError(f"wrong argument called {which}")

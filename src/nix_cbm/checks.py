@@ -33,7 +33,7 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     INPUT: None
     OUTPUT: ok, bool.
     """
-    # checks for two things:
+    # checks for the following:
     # 1) .git dir present
     # 2) default.nix present
     # 3) .version present
