@@ -64,9 +64,7 @@
           ];
           shellHook = ''
             # make the locally developed package generally available
-            export PYTHONPATH="${
-              ./src
-            }:$PYTHONPATH"
+            export PYTHONPATH="${./.}/src:$PYTHONPATH"
 
             # setup local venv dir for IDEs
             if [ -d "${venvDir}" ]; then
@@ -140,10 +138,10 @@
               ];
             } ''
             mkdir $out
-            black ${./src} --check --diff --color -l 90
-            flake8 --config ${./setup.cfg} ${./src}
+            black ${./.}/src --check --diff --color -l 90
+            flake8 --config ${./.}/setup.cfg ${./.}/src
             # need to exclude automatic generated files
-            vulture --min-confidence 70 --ignore-names "revision" ${./src}
+            vulture --min-confidence 70 --ignore-names "revision" ${./.}/src
           '';
           pytest = pkgs.runCommand "pytest"
             {
@@ -165,13 +163,13 @@
             mkdir $out
             # this adds the package to sys.path of python
             # so pytest can find and import it
-            export PYTHONPATH="${./src}:$PYTHONPATH"
+            export PYTHONPATH="${./.}/src:$PYTHONPATH"
             # need a home for db file
             export HOME=$TMPDIR
             # don't use cache dir, since it is read only with nix
-            python -m pytest ${./.} -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.coveragerc}
+            python -m pytest ${./.} -p no:cacheprovider --cov nix_cbm --cov-report term-missing --cov-config=${./.}/.coveragerc
             cp -v .coverage $out/.coverage
-            echo ${./src} > $out/srcpath
+            echo ${./.}/src > $out/srcpath
           '';
           mypy = pkgs.runCommand "mypy"
             {
@@ -184,7 +182,7 @@
               ];
             } ''
             mkdir $out
-            mypy --config-file ${./setup.cfg} ${./src}
+            mypy --config-file ${./.}/setup.cfg ${./.}/src
           '';
         };
       });
