@@ -1,4 +1,24 @@
-#### [Version 0.2.0](https://gador/nix-check-build-merge/releases/tag/0.2.0) 
+#### [Version 0.2.1](https://gador/nix-check-build-merge/releases/tag/0.2.1) 
+### Fixed Bugs 
+- load settings from db [#39](https://gador/nix-check-build-merge/issues/#39) ([@gador](https://github.com/@gador))
+- clean Package list after change of maintainer [#40](https://gador/nix-check-build-merge/issues/#40) ([@gador](https://github.com/@gador))
+- check for current database before calling it [#44](https://gador/nix-check-build-merge/issues/#44) ([@gador](https://github.com/@gador))
+- bugfix: save nixpkgs to db [#45](https://gador/nix-check-build-merge/issues/#45) ([@gador](https://github.com/@gador))
+- normalize path before returning path [#46](https://gador/nix-check-build-merge/issues/#46) ([@gador](https://github.com/@gador))
+- ensure nixpkgs path is local to the user [#50](https://gador/nix-check-build-merge/issues/#50) ([@gador](https://github.com/@gador))
+### Other Changes 
+- fix small errors in README [#36](https://gador/nix-check-build-merge/issues/#36) ([@gador](https://github.com/@gador))
+- save persistent config in sqlite database [#37](https://gador/nix-check-build-merge/issues/#37) ([@gador](https://github.com/@gador))
+- Add settings page to frontend [#38](https://gador/nix-check-build-merge/issues/#38) ([@gador](https://github.com/@gador))
+- Add coveralls and readme badge [#41](https://gador/nix-check-build-merge/issues/#41) ([@gador](https://github.com/@gador))
+- unify nix store path in flake.nix [#42](https://gador/nix-check-build-merge/issues/#42) ([@gador](https://github.com/@gador))
+- change src path for dev environment [#43](https://gador/nix-check-build-merge/issues/#43) ([@gador](https://github.com/@gador))
+- ci(Mergify): configuration update [#47](https://gador/nix-check-build-merge/issues/#47) ([@gador](https://github.com/@gador))
+- check path first before commiting [#48](https://gador/nix-check-build-merge/issues/#48) ([@gador](https://github.com/@gador))
+- update path testing [#49](https://gador/nix-check-build-merge/issues/#49) ([@gador](https://github.com/@gador))
+- use fullpath [#51](https://gador/nix-check-build-merge/issues/#51) ([@gador](https://github.com/@gador))
+ 
+ #### [Version 0.2.0](https://gador/nix-check-build-merge/releases/tag/0.2.0) 
 ### Implemented Enhancements 
 - Add option to check different architectures [#34](https://gador/nix-check-build-merge/issues/#34) ([@gador](https://github.com/@gador))
 ### Fixed Bugs 
