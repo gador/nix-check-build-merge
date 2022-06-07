@@ -17,11 +17,14 @@ class CheckTestCase(unittest.TestCase):
 
     @mock.patch("os.path.exists")
     def test_check_nixpkgs_dir(self, path):
-        self.assertTrue(checks.check_nixpkgs_dir("/"))
+        self.assertTrue(checks.check_nixpkgs_dir("~"))
         assert 3 == path.call_count
 
     def test_check_nixpkgs_dir_not_found(self):
-        self.assertFalse(checks.check_nixpkgs_dir("/"))
+        self.assertFalse(checks.check_nixpkgs_dir("~"))
+
+    def test_check_nixpkgs_raises(self):
+        self.assertRaises(NotADirectoryError, checks.check_nixpkgs_dir, "/")
 
 
 if __name__ == "__main__":
