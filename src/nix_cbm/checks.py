@@ -2,6 +2,8 @@ import logging
 import os
 from shutil import which
 
+from pathvalidate import sanitize_filepath  # type: ignore
+
 
 def _exists(name: str) -> bool:
     """
@@ -44,11 +46,11 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
         raise NotADirectoryError(
             f"The provided path {str(nixpkgs_path)} evaluates to {str(fullpath)} which tries to escape the home directory path"
         )
-
-    git_dir = os.path.exists(os.path.join(nixpkgs_path, ".git"))
-    default_nix = os.path.exists(os.path.join(nixpkgs_path, "default.nix"))
-    version = os.path.exists(os.path.join(nixpkgs_path, ".version"))
-    if git_dir and default_nix and version:
+    path = sanitize_filepath(fullpath, platform="auto")
+    git_folder = os.path.exists(os.path.join(path, ".git"))
+    default_nix = os.path.exists(os.path.join(path, "default.nix"))
+    version_file = os.path.exists(os.path.join(path, ".version"))
+    if git_folder and default_nix and version_file:
         return True
-    logging.warning(f"Directory {nixpkgs_path} doesn't seem to be a nixpkgs repo")
+    logging.warning(f"Directory {path} doesn't seem to be a nixpkgs repo")
     return False

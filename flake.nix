@@ -27,6 +27,7 @@
             sphinx
             rq
             redis
+            pathvalidate
 
             #test and formatting
             pytest
@@ -95,6 +96,7 @@
             pkgs.git
             pkgs.hydra-check
             pkgs.redis
+            pathvalidate
           ];
           patches = [
             (pkgs.substituteAll {
@@ -158,6 +160,7 @@
                 redis
                 rq
                 coveralls
+                pathvalidate
               ];
             } ''
             mkdir $out
