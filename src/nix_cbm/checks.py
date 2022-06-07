@@ -45,9 +45,9 @@ def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
             f"The provided path {str(nixpkgs_path)} evaluates to {str(fullpath)} which tries to escape the home directory path"
         )
 
-    git_dir = os.path.exists(os.path.join(fullpath, ".git"))
-    default_nix = os.path.exists(os.path.join(fullpath, "default.nix"))
-    version = os.path.exists(os.path.join(fullpath, ".version"))
+    git_dir = os.path.exists(os.path.normpath(os.path.join(fullpath, ".git")))
+    default_nix = os.path.exists(os.path.normpath(os.path.join(fullpath, "default.nix")))
+    version = os.path.exists(os.path.normpath(os.path.join(fullpath, ".version")))
     if git_dir and default_nix and version:
         return True
     logging.warning(f"Directory {fullpath} doesn't seem to be a nixpkgs repo")
