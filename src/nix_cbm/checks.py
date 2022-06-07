@@ -30,13 +30,21 @@ def check_tools(
 def check_nixpkgs_dir(nixpkgs_path: str) -> bool:
     """
     Checks, whether we are in a nixpkgs repo dir.
-    INPUT: None
+    INPUT: nixpkgs path. This needs to be inside the home directory of the user!
     OUTPUT: ok, bool.
     """
     # checks for the following:
     # 1) .git dir present
     # 2) default.nix present
     # 3) .version present
+
+    base_path = os.path.expanduser("~")
+    fullpath = os.path.normpath(os.path.join(base_path, nixpkgs_path))
+    if not fullpath.startswith(base_path):
+        raise NotADirectoryError(
+            f"The provided path {str(nixpkgs_path)} evaluates to {str(fullpath)} which tries to escape the home directory path"
+        )
+
     git_dir = os.path.exists(os.path.join(nixpkgs_path, ".git"))
     default_nix = os.path.exists(os.path.join(nixpkgs_path, "default.nix"))
     version = os.path.exists(os.path.join(nixpkgs_path, ".version"))

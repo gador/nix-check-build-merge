@@ -95,19 +95,21 @@ Alternatively, you can build and run it locally with
 ```sh
 nix build github:gador/nix-check-build-merge
 # or
-nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /path/to/your/local/nixpkgs
+nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /home/you/nixpkgs
 ```
 
 For production use (something not really recommended yet), you can run the flask web frontend with `gunicorn`. For that to work, use:
 ```sh
 export MAINTAINER=yourgithubhandle
-export NIXPKGS=absolute/path/to/local/nixpkgs
+export NIXPKGS=/home/you/nixpkgs
 nix build github:gador/nix-check-build-merge
 result/bin/nixcbm_start
 ```
 
 
 nixcbm will create a folder at ~/.config/nix-check-build-merge and save a sqlite database as well as a workdir of your local nicpkgs repo there.
+
+**Please note: The `nixpkgs` directory needs to be inside the user directory of the user running nixcbm!**
 
 ### Prerequisites
 
@@ -118,7 +120,7 @@ Currently, this project was only tested and build on NixOS. If you have nix, it 
 1. Install nix/NixOS.
 2. Run the application.
    ```sh
-   nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /path/to/your/local/nixpkgs
+   nix run github:gador/nix-check-build-merge -- frontend --maintainer youtgithubhandle --nixpkgs /home/you/nixpkgs
    ```
 <p align="right">(<a href="#top">back to top</a>)</p>
 
