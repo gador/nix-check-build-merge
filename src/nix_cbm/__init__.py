@@ -22,7 +22,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 logging.basicConfig(level=logging.DEBUG)
 
 
-def _preflight(nixpkgs_path: str) -> bool:
+def preflight(nixpkgs_path: str) -> bool:
     """
     Check if all running conditions are met.
     This is the only function to interact with the
@@ -41,17 +41,20 @@ def _preflight(nixpkgs_path: str) -> bool:
     checks.check_nixpkgs_dir(nixpkgs_path)
     git.git_worktree(repo=nixpkgs_path, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
     git.git_pull(repo=Config.NIXPKGS_WORKDIR)
-    # check for database
-    if not os.path.isfile(Config.SQLALCHEMY_DATABASE_URI.replace("sqlite:///", "")):
-        logging.info(f"Creating db at {Config.SQLALCHEMY_DATABASE_URI}")
-        with frontend.app.app_context():
-            flask_migrate.upgrade(
-                directory=os.path.join(basedir, "migrations"), revision="head"
-            )
+    check_for_database()
     # Make sure Maintainer and nixpkgs path is saved to db and updated if changed
     restore_or_save_config()
     Config.PREFLIGHT_DONE = True
     return True
+
+
+def check_for_database() -> None:
+    """checks, if database exists and updates it, if necessary"""
+    logging.info(f"Creating or updating db at {Config.SQLALCHEMY_DATABASE_URI}")
+    with frontend.app.app_context():
+        flask_migrate.upgrade(
+            directory=os.path.join(basedir, "migrations"), revision="head"
+        )
 
 
 def _get_build_status_from_json(package_json: list[dict]) -> bool:
@@ -229,7 +232,7 @@ def cli(nixpkgs: str, maintainer: str, action: str) -> None:
         raise LookupError("Please provide a maintainer")
     if not Config.MAINTAINER:
         Config.MAINTAINER = maintainer
-    _preflight(Config.NIXPKGS_ORIGINAL)
+    preflight(Config.NIXPKGS_ORIGINAL)
     if action == "update":
         refresh_build_status()
     elif action == "frontend":

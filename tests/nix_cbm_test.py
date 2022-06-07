@@ -207,11 +207,8 @@ class MyTestCase(unittest.TestCase):
     @mock.patch("nix_cbm.git.git_worktree")
     @mock.patch("nix_cbm.git.git_pull")
     @mock.patch("nix_cbm.checks.check_tools", return_value=[])
-    @mock.patch("flask_migrate.upgrade")
-    @mock.patch("os.path.isfile", return_value=False)
-    def test_preflight(
-        self, mock_config, upgrade, check_tools, git_pull, git_worktree, nixpkgs_dir
-    ):
+    @mock.patch("nix_cbm.check_for_database")
+    def test_preflight(self, upgrade, check_tools, git_pull, git_worktree, nixpkgs_dir):
         """test_preflight
 
         this will test the preflight call and mock all other function
@@ -219,10 +216,8 @@ class MyTestCase(unittest.TestCase):
 
         Parameters
         ----------
-        mock_config : _type_
-            checks the existence of the sqlite file
         upgrade : _type_
-            upgrade script called, if no database has been found
+            upgrade script called
         check_tools : _type_
             call to check_tools (checks for existence of all needed tools)
         git_pull : _type_
@@ -234,20 +229,23 @@ class MyTestCase(unittest.TestCase):
         """
         self.setup_config()
         self.setup_db()
-        self.assertTrue(nix_cbm._preflight("/"))
+        self.assertTrue(nix_cbm.preflight("/"))
         nixpkgs_dir.assert_called_once()
         check_tools.assert_called_once()
         git_worktree.assert_called_once()
         git_pull.assert_called_once()
-        mock_config.assert_called_once()
-        # called twice. Once in this setup, once inside _preflight function
-        assert upgrade.call_count == 2
+        upgrade.assert_called_once()
         self.tear_down()
+
+    @mock.patch("flask_migrate.upgrade")
+    def test_check_for_database(self, upgrade):
+        nix_cbm.check_for_database()
+        upgrade.assert_called_once()
 
     @mock.patch("nix_cbm.checks.check_tools", return_value=["missing_program"])
     def test_preflight_missing_programs(self, check_tools):
         """test_preflight_missing_programs test the LookupError for missing programs"""
-        self.assertRaises(LookupError, nix_cbm._preflight, "nixpkgs_path")
+        self.assertRaises(LookupError, nix_cbm.preflight, "nixpkgs_path")
         check_tools.assert_called_once()
 
     def test_get_build_stats(self):
@@ -535,7 +533,7 @@ class MyTestCase(unittest.TestCase):
         nix_cbm.Config.MAINTAINER = ""
         with mock.patch("nix_cbm.frontend.app.run") as frontend, mock.patch(
             "nix_cbm.refresh_build_status"
-        ) as build_status, mock.patch("nix_cbm._preflight") as preflight:
+        ) as build_status, mock.patch("nix_cbm.preflight") as preflight:
             with tempfile.TemporaryDirectory() as tmp:
                 runner = CliRunner()
 

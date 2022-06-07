@@ -61,6 +61,18 @@ class FrontendTestCase(unittest.TestCase):
         # should stay false, since we return early, due to TESTING == True
         assert nix_cbm.Config.PREFLIGHT_DONE == False
 
+    def test_config_is_set(self):
+        self.assertTrue(nix_cbm.frontend.config_is_set())
+        nix_cbm.Config.MAINTAINER = ""
+        self.assertFalse(nix_cbm.frontend.config_is_set())
+
+        # test loading from database
+        nix_cbm.save_maintainer_to_db("test_maintainer")
+        nix_cbm.save_nixpkgs_to_db("/nixpkgs")
+        self.assertTrue(nix_cbm.frontend.config_is_set())
+        self.assertEqual(nix_cbm.Config.MAINTAINER, "test_maintainer")
+        self.assertEqual(nix_cbm.Config.NIXPKGS_ORIGINAL, "/nixpkgs")
+
     def test_get_packages(self):
         with mock.patch("flask_sqlalchemy._QueryProperty.__get__") as queryMOCK:
             # queryMOCK.return_value.filter_by.return_value.all.return_value = [1,22]
