@@ -64,7 +64,7 @@
           ];
           shellHook = ''
             # make the locally developed package generally available
-            export PYTHONPATH="${./.}/src:$PYTHONPATH"
+            export PYTHONPATH="./src:$PYTHONPATH"
 
             # setup local venv dir for IDEs
             if [ -d "${venvDir}" ]; then
