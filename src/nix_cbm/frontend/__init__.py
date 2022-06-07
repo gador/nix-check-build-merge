@@ -19,7 +19,7 @@ migrate = Migrate(app, db)
 def init_app() -> None:
     """makes sure preflight ran"""
     if not Config.PREFLIGHT_DONE:
-        nix_cbm._preflight(Config.NIXPKGS_ORIGINAL)
+        nix_cbm.preflight(Config.NIXPKGS_ORIGINAL)
 
 
 def config_is_set() -> bool:
@@ -27,6 +27,7 @@ def config_is_set() -> bool:
     if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
         return True
     # not set, so try loading from database
+    nix_cbm.check_for_database()
     nix_cbm.restore_or_save_config()
     # now, try again
     if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
