@@ -3,8 +3,10 @@ import unittest
 from unittest import mock
 
 import flask_migrate  # type: ignore
+from fakeredis import FakeStrictRedis
 from hypothesis import given
 from hypothesis import strategies as st
+from rq import Queue  # type: ignore
 
 import nix_cbm
 
@@ -61,10 +63,13 @@ class FrontendTestCase(unittest.TestCase):
         # should stay false, since we return early, due to TESTING == True
         assert nix_cbm.Config.PREFLIGHT_DONE == False
 
-    def test_config_is_set(self):
+    @mock.patch("nix_cbm.check_for_database")
+    def test_config_is_set(self, check_db):
         self.assertTrue(nix_cbm.frontend.config_is_set())
+        check_db.assert_not_called()
         nix_cbm.Config.MAINTAINER = ""
         self.assertFalse(nix_cbm.frontend.config_is_set())
+        check_db.assert_called_once()
 
         # test loading from database
         nix_cbm.save_maintainer_to_db("test_maintainer")
@@ -94,13 +99,99 @@ class FrontendTestCase(unittest.TestCase):
         self.assertEqual(nix_cbm.frontend.input_sanitizer(regex, "maintainer"), regex)
         self.assertIsNone(nix_cbm.frontend.input_sanitizer(illegal_regex, "maintainer"))
 
-    def test_main_page_without_settings(self):
+    @mock.patch("redis.from_url", return_value="mock_connection")
+    def test_get_redis_queue(self, mock_from_url):
+        self.assertEqual(nix_cbm.frontend.get_redis_queue().connection, "mock_connection")
+        mock_from_url.assert_called_with(nix_cbm.Config.REDIS_URL)
+
+    def test_check_build(self):
+        """
+        Although we use a fake redis here, the call to refresh_build_status
+        is real. There are no packages in the (fake) database setup, therefore
+        hydra-check is not invoked.
+        """
+        with nix_cbm.frontend.app.test_client() as test_client, mock.patch(
+            "nix_cbm.frontend.get_redis_queue"
+        ) as mock_redis:
+            queue = Queue(is_async=False, connection=FakeStrictRedis())
+            mock_redis.return_value = queue
+            response = test_client.post(
+                "/task/check",
+                data={},
+            )
+            assert response.status_code == 202
+            job_id = str(response.location)[8:]
+            job = queue.fetch_job(job_id)
+            assert job.is_finished
+
+    def test_check_build_maintainer(self):
+        """
+        Test the same as above, just with different maintainer set
+        """
+        with nix_cbm.frontend.app.test_client() as test_client, mock.patch(
+            "nix_cbm.frontend.get_redis_queue"
+        ) as mock_redis, mock.patch(
+            "nix_cbm.NixCbm.update_maintained_packages_list"
+        ) as mock_update:
+            nix_cbm.Config.MAINTAINER = "new_maintainer"
+            queue = Queue(is_async=False, connection=FakeStrictRedis())
+            mock_redis.return_value = queue
+            response = test_client.post(
+                "/task/maintainer",
+                data={},
+            )
+            assert response.status_code == 202
+            mock_update.assert_called_with("new_maintainer")
+            job_id = str(response.location)[8:]
+            job = queue.fetch_job(job_id)
+            assert job.is_finished
+
+    def test_check_build_wrong_call(self):
+        """
+        Test with wrong argument
+        """
+        with nix_cbm.frontend.app.test_client() as test_client, mock.patch(
+            "nix_cbm.frontend.get_redis_queue"
+        ) as mock_redis:
+            queue = Queue(is_async=False, connection=FakeStrictRedis())
+            mock_redis.return_value = queue
+            response = test_client.post(
+                "/task/what",
+                data={},
+            )
+            assert response.status_code == 400
+
+    def test_job_status(self):
+        with nix_cbm.frontend.app.test_client() as test_client, mock.patch(
+            "nix_cbm.frontend.get_redis_queue"
+        ) as mock_redis:
+            queue = Queue(is_async=False, connection=FakeStrictRedis())
+            mock_redis.return_value = queue
+            # just any job without return value
+            job = queue.enqueue(nix_cbm.load_maintainer_from_db)
+            response = test_client.get("/status/" + str(job.id))
+            assert response.status_code == 200
+            self.assertEqual(response.text, '{"result":null,"status":"finished"}\n')
+
+    def test_job_status_unknown(self):
+        with nix_cbm.frontend.app.test_client() as test_client, mock.patch(
+            "nix_cbm.frontend.get_redis_queue"
+        ) as mock_redis:
+            queue = Queue(is_async=False, connection=FakeStrictRedis())
+            mock_redis.return_value = queue
+            response = test_client.get("/status/" + "00000")
+            assert response.status_code == 200
+            self.assertEqual(response.text, '{"status":"unknown"}\n')
+
+    @mock.patch("nix_cbm.check_for_database")
+    def test_main_page_without_settings(self, check_db):
         # Create a test client using the Flask application configured for testing
         nix_cbm.Config.MAINTAINER = ""
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
         with nix_cbm.frontend.app.test_client() as test_client:
             response = test_client.get("/")
             assert response.status_code == 302
+            check_db.assert_called_once()
 
     def test_main_page(self):
         with nix_cbm.frontend.app.test_client() as test_client:

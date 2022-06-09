@@ -134,7 +134,6 @@ class InsertOrUpdate:
         self.arch = arch
 
     def convert_timestamp(self) -> Optional[datetime.datetime]:
-
         try:
             timestamp_str = str(self.hydra_output[self.package][0]["timestamp"])
             timestamp_str = timestamp_str.replace("Z", "+00:00")
@@ -183,14 +182,22 @@ class InsertOrUpdate:
 
 
 def refresh_build_status(
-    reload_maintainer: bool = False, arch: str = "x86_64-linux"
-) -> None:
+    reload_maintainer: bool = False,
+    arch: str = "x86_64-linux",
+    maintainer: str = Config.MAINTAINER,
+) -> str:
+    """
+    Refresh the build status
+
+    Notice: Some config is explicitly passed here, since the redis worker was started before the config got updates
+    """
     logging.info(f"Refreshing build status for for arch {arch}")
     nixcbm = NixCbm()
     nixcbm.nixpkgs_repo = Config.NIXPKGS_WORKDIR
     if reload_maintainer:
+        logging.info(f"Refreshing maintainer: {maintainer}")
         nixcbm.clean_maintained_packages()
-        nixcbm.update_maintained_packages_list(Config.MAINTAINER)
+        nixcbm.update_maintained_packages_list(maintainer)
         nixcbm.save_maintained_packages_to_db()
     nixcbm.load_maintained_packages_from_database()
     nixcbm.check_hydra_status(nixcbm.maintained_packages, arch=arch)
@@ -199,6 +206,10 @@ def refresh_build_status(
         result = _get_build_status_from_json(hydra_output[package])
         insert_or_update = InsertOrUpdate(package, hydra_output, result, arch)
         insert_or_update.insert_or_update()
+    if reload_maintainer:
+        return f"Refresh for maintained packages by {maintainer} successful"
+    else:
+        return f"Refresh checking for {arch} successful"
 
 
 def main() -> None:

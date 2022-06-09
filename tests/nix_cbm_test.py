@@ -473,13 +473,12 @@ class MyTestCase(unittest.TestCase):
         mock_nixcbm.return_value.maintained_packages = ["pgadmin"]
         mock_nixcbm.return_value.hydra_build_status = {"pgadmin": self.mock_hydra_output}
 
-        self.assertIsNone(nix_cbm.refresh_build_status(reload_maintainer=False))
-
+        self.assertTrue(nix_cbm.refresh_build_status(reload_maintainer=False))
         mock_nixcbm.assert_called_once()
         get_build_status.assert_called_once()
         insertOrUpdate.assert_called_once()
 
-        self.assertIsNone(nix_cbm.refresh_build_status(reload_maintainer=True))
+        self.assertTrue(nix_cbm.refresh_build_status(reload_maintainer=True))
 
     # Unicode surrogate don't work with db
     @given(st.characters(blacklist_categories="CS"))

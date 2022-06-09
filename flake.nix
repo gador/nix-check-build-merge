@@ -39,6 +39,7 @@
             mypy
             vulture
             hypothesis
+            fakeredis
           ]);
         pre-commit = pkgs.writeScriptBin "pre-commit" ''
           #!${pkgs.runtimeShell}
@@ -113,7 +114,7 @@
           preCheck = ''
             export HOME=$TMPDIR
           '';
-          checkInputs = with pkgs.python310Packages; [ pytestCheckHook hypothesis ];
+          checkInputs = with pkgs.python310Packages; [ pytestCheckHook hypothesis fakeredis];
           postInstall = ''
             substituteInPlace supervisord.conf --replace "nixcbm worker" "$out/bin/nixcbm worker"
             install -Dm 0644 supervisord.conf $out/etc/supervisord.conf
@@ -161,6 +162,7 @@
                 rq
                 coveralls
                 pathvalidate
+                fakeredis
               ];
             } ''
             mkdir $out
