@@ -13,6 +13,8 @@ jobs:
           nixpkgs=channel:nixos-unstable
     - run: |
         nix build -L .#checks.x86_64-linux.pytest
+        # make sure cbm builds in an isolated build environment
+        nix build -L . --no-link
         cp -v result/.coverage .
         ROOTPATH=$(cat result/srcpath)
         nix run nixpkgs#python310Packages.coveralls -- --service=github --basedir=$ROOTPATH --srcdir=src
