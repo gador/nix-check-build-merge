@@ -134,7 +134,6 @@ class InsertOrUpdate:
         self.arch = arch
 
     def convert_timestamp(self) -> Optional[datetime.datetime]:
-
         try:
             timestamp_str = str(self.hydra_output[self.package][0]["timestamp"])
             timestamp_str = timestamp_str.replace("Z", "+00:00")

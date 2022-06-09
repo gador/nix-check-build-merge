@@ -71,7 +71,8 @@ def input_sanitizer(input: str, which: str) -> Union[str, None]:
 def get_redis_queue() -> Queue:
     redis_url = Config.REDIS_URL
     redis_connection = redis.from_url(redis_url)
-    return Queue(connection=redis_connection)
+    q = Queue(connection=redis_connection)
+    return q
 
 
 @app.route("/task/<task>", methods=["POST"])
@@ -94,7 +95,7 @@ def check_build(
                 maintainer=Config.MAINTAINER,
             )
     else:
-        return "invalid request", 500
+        return "invalid request", 400
     return jsonify({}), 202, {"Location": url_for("job_status", job_id=job.get_id())}
 
 
