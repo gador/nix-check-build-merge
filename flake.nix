@@ -115,7 +115,7 @@
           '';
           checkInputs = with pkgs.python310Packages; [ pytestCheckHook hypothesis ];
           postInstall = ''
-            substituteInPlace supervisord.conf --replace "command=nixcbm worker" "command=$out/bin/nixcbm worker"
+            substituteInPlace supervisord.conf --replace "nixcbm worker" "$out/bin/nixcbm worker"
             install -Dm 0644 supervisord.conf $out/etc/supervisord.conf
             substituteInPlace nixcbm_start.sh --replace "supervisord.conf" "$out/etc/supervisord.conf"
             install -Dm 0755 nixcbm_start.sh $out/bin/nixxcbm_start 

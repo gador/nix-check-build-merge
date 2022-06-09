@@ -1,6 +1,8 @@
+diff --git a/supervisord.conf b/supervisord.conf
+index 70ed576..ba909c9 100644
 --- a/supervisord.conf
 +++ b/supervisord.conf
-@@ -19,12 +19,12 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+@@ -19,16 +19,16 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
  serverurl=unix:///tmp/supervisor_nixcbm.sock ; use a unix:// URL  for a unix socket
  
  [program:gunicorn]
@@ -15,3 +17,8 @@
  redirect_stderr=true
  priority=1
  
+ [program:redis-worker]
+-command=python src/nix_cbm/__init__.py worker
++command=nixcbm worker
+ redirect_stderr=true
+ priority=2
