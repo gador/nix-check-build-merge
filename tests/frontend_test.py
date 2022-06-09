@@ -63,10 +63,13 @@ class FrontendTestCase(unittest.TestCase):
         # should stay false, since we return early, due to TESTING == True
         assert nix_cbm.Config.PREFLIGHT_DONE == False
 
-    def test_config_is_set(self):
+    @mock.patch("nix_cbm.check_for_database")
+    def test_config_is_set(self, check_db):
         self.assertTrue(nix_cbm.frontend.config_is_set())
+        check_db.assert_not_called()
         nix_cbm.Config.MAINTAINER = ""
         self.assertFalse(nix_cbm.frontend.config_is_set())
+        check_db.assert_called_once()
 
         # test loading from database
         nix_cbm.save_maintainer_to_db("test_maintainer")
@@ -180,13 +183,15 @@ class FrontendTestCase(unittest.TestCase):
             assert response.status_code == 200
             self.assertEqual(response.text, '{"status":"unknown"}\n')
 
-    def test_main_page_without_settings(self):
+    @mock.patch("nix_cbm.check_for_database")
+    def test_main_page_without_settings(self, check_db):
         # Create a test client using the Flask application configured for testing
         nix_cbm.Config.MAINTAINER = ""
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
         with nix_cbm.frontend.app.test_client() as test_client:
             response = test_client.get("/")
             assert response.status_code == 302
+            check_db.assert_called_once()
 
     def test_main_page(self):
         with nix_cbm.frontend.app.test_client() as test_client:
