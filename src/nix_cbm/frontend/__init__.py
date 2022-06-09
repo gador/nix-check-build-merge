@@ -1,9 +1,11 @@
 import re
 from typing import Tuple, Union
 
-from flask import Flask, jsonify, redirect, render_template, request, wrappers
+import redis  # type: ignore
+from flask import Flask, jsonify, redirect, render_template, request, url_for, wrappers
 from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
+from rq import Queue  # type: ignore
 from werkzeug import Response
 
 import nix_cbm
@@ -66,11 +68,50 @@ def input_sanitizer(input: str, which: str) -> Union[str, None]:
         raise ValueError(f"wrong argument called {which}")
 
 
-# TODO: add functionality
-@app.route("/tasks", methods=["POST"])
-def run_task() -> Tuple[wrappers.Response, int]:
-    task_type = request.form["type"]
-    return jsonify(task_type), 202
+def get_redis_queue() -> Queue:
+    redis_url = Config.REDIS_URL
+    redis_connection = redis.from_url(redis_url)
+    return Queue(connection=redis_connection)
+
+
+@app.route("/task/<task>", methods=["POST"])
+def check_build(
+    task: str,
+) -> Union[Tuple[str, int], Tuple[wrappers.Response, int, dict[str, str]]]:
+    q = get_redis_queue()
+    if task == "check":
+        job = q.enqueue(
+            nix_cbm.refresh_build_status,
+            arch="x86_64-linux",
+            maintainer=Config.MAINTAINER,
+        )
+    elif task == "maintainer":
+        if Config.MAINTAINER:
+            job = q.enqueue(
+                nix_cbm.refresh_build_status,
+                reload_maintainer=True,
+                arch="x86_64-linux",
+                maintainer=Config.MAINTAINER,
+            )
+    else:
+        return "invalid request", 500
+    return jsonify({}), 202, {"Location": url_for("job_status", job_id=job.get_id())}
+
+
+@app.route("/status/<job_id>")
+def job_status(job_id: str) -> wrappers.Response:
+    q = get_redis_queue()
+    job = q.fetch_job(job_id)
+    if job is None:
+        response = {"status": "unknown"}
+    else:
+        response = {
+            "status": job.get_status(),
+            "result": job.result,
+        }
+        if job.is_failed:
+            response["message"] = job.exc_info.strip().split("\n")[-1]
+    return jsonify(response)
 
 
 @app.route("/settings", methods=["GET", "POST"])
