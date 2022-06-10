@@ -37,6 +37,7 @@ $(document).ready(function () {
         case 'finished':
           flash_alert(data.result, 'success')
           $('#' + button).removeAttr('disabled')
+          location.reload()
           break
         case 'failed':
           flash_alert('Job failed: ' + data.message, 'danger')

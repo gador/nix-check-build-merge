@@ -18,6 +18,8 @@ class PersistentConfig(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     maintainer = db.Column(db.String(64), index=True)
     nixpkgs_path = db.Column(db.String(256))
+    # comma, separated list, just like the environment variable
+    archs_to_check = db.Column(db.String(256))
 
     def __repr__(self) -> str:
-        return f"<Maintainer {self.maintainer}, Path {self.nixpkgs_path}>"
+        return f"<Maintainer {self.maintainer}, Path {self.nixpkgs_path}, Archs {self.archs_to_check}>"

@@ -8,7 +8,15 @@ nixpkgs_workdir = os.path.join(basedir, "nixpkgs")
 class Config:
     if not os.path.exists(basedir):
         os.makedirs(basedir, exist_ok=True)
+
+    # fixed values
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    QUEUES = ["default"]
+    PREFLIGHT_DONE = False
+    TESTING = False
+    SUPPORTED_ARCHS = ["x86_64-linux", "aarch64-linux"]
+
+    # User changeable settings
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL"
     ) or "sqlite:///" + os.path.join(basedir, "nixcbm.db")
@@ -20,6 +28,3 @@ class Config:
     else:
         ARCH_TO_CHECK = ["x86_64-linux"]
     REDIS_URL = os.environ.get("REDIS_URL") or "redis:///"
-    QUEUES = ["default"]
-    PREFLIGHT_DONE = False
-    TESTING = False
