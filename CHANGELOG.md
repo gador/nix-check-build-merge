@@ -1,4 +1,14 @@
-#### [Version 0.2.1](https://gador/nix-check-build-merge/releases/tag/0.2.1) 
+#### [Version 0.3.0](https://gador/nix-check-build-merge/releases/tag/0.3.0) 
+### Implemented Enhancements 
+- Add asynchronous  frontend [#56](https://gador/nix-check-build-merge/issues/#56) ([@gador](https://github.com/@gador))
+### Other Changes 
+- improve nixpkgs test routine [#53](https://gador/nix-check-build-merge/issues/#53) ([@gador](https://github.com/@gador))
+- add a second preflight test [#54](https://gador/nix-check-build-merge/issues/#54) ([@gador](https://github.com/@gador))
+- [supervisord] run nixcbm from dev directory when developing [#55](https://gador/nix-check-build-merge/issues/#55) ([@gador](https://github.com/@gador))
+- Version bump to Release 0.3 [#57](https://gador/nix-check-build-merge/issues/#57) ([@gador](https://github.com/@gador))
+- put build CI workflow in a sperate file [#58](https://gador/nix-check-build-merge/issues/#58) ([@gador](https://github.com/@gador))
+ 
+ #### [Version 0.2.1](https://gador/nix-check-build-merge/releases/tag/0.2.1) 
 ### Fixed Bugs 
 - load settings from db [#39](https://gador/nix-check-build-merge/issues/#39) ([@gador](https://github.com/@gador))
 - clean Package list after change of maintainer [#40](https://gador/nix-check-build-merge/issues/#40) ([@gador](https://github.com/@gador))
