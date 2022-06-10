@@ -387,7 +387,7 @@ class MyTestCase(unittest.TestCase):
         # reset config
         self.setup_config()
 
-    @given(st.characters(blacklist_categories="CS"))
+    @given(st.characters(blacklist_categories="CS", blacklist_characters=","))
     def test_save_arch_to_db(self, cs):
         self.setup_config()
         self.setup_db()
@@ -402,7 +402,7 @@ class MyTestCase(unittest.TestCase):
         self.tear_down()
         self.setup_config()
 
-    @given(st.characters(blacklist_categories="CS"))
+    @given(st.characters(blacklist_categories="CS", blacklist_characters=","))
     def test_load_arch_from_db(self, cs):
         self.setup_config()
         self.setup_db()
