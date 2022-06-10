@@ -175,6 +175,7 @@ class MyTestCase(unittest.TestCase):
         nix_cbm.Config.MAINTAINER = "test_maintainer"
         nix_cbm.Config.NIXPKGS_WORKDIR = "/"
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
+        nix_cbm.Config.ARCH_TO_CHECK = ["x86_64-linux"]
 
     def setup_db(self):
         """setup_db sets up the database connection
@@ -366,6 +367,7 @@ class MyTestCase(unittest.TestCase):
         nix_cbm.load_nixpkgs_from_db()
         nix_cbm.Config.NIXPKGS_ORIGINAL = "testpath"
         # don't override if no path is set
+        nix_cbm.load_nixpkgs_from_db()
         assert nix_cbm.Config.NIXPKGS_ORIGINAL == "testpath"
 
         db_entry = nix_cbm.models.PersistentConfig(
@@ -378,6 +380,50 @@ class MyTestCase(unittest.TestCase):
         # loading from db should override existing values
         nix_cbm.load_nixpkgs_from_db()
         assert nix_cbm.Config.NIXPKGS_ORIGINAL == cs
+
+        nix_cbm.frontend.db.drop_all()
+        self.tear_down()
+
+        # reset config
+        self.setup_config()
+
+    @given(st.characters(blacklist_categories="CS", blacklist_characters=","))
+    def test_save_arch_to_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.ARCH_TO_CHECK == ["x86_64-linux"]
+        nix_cbm.save_arch_to_db(cs)
+        result = nix_cbm.models.PersistentConfig.query.filter_by(
+            archs_to_check=cs
+        ).first()
+        self.assertEqual(result.archs_to_check, cs)
+
+        self.tear_down()
+        self.setup_config()
+
+    @given(st.characters(blacklist_categories="CS", blacklist_characters=","))
+    def test_load_arch_from_db(self, cs):
+        self.setup_config()
+        self.setup_db()
+
+        assert nix_cbm.Config.ARCH_TO_CHECK == ["x86_64-linux"]
+        nix_cbm.load_arch_from_db()
+        nix_cbm.Config.ARCH_TO_CHECK = ["x86_64-linux", "aarch64-linux"]
+        # doesn't override anything, since the db is empty
+        nix_cbm.load_arch_from_db()
+        assert nix_cbm.Config.ARCH_TO_CHECK == ["x86_64-linux", "aarch64-linux"]
+
+        db_entry = nix_cbm.models.PersistentConfig(
+            id=0,
+            archs_to_check=cs,
+        )
+        nix_cbm.frontend.db.session.add(db_entry)
+        nix_cbm.frontend.db.session.commit()
+
+        # loading from db should override existing values
+        nix_cbm.load_arch_from_db()
+        assert nix_cbm.Config.ARCH_TO_CHECK == [cs]
 
         nix_cbm.frontend.db.drop_all()
         self.tear_down()

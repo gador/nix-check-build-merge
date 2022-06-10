@@ -26,6 +26,8 @@ def init_app() -> None:
 def config_is_set() -> bool:
     """Check, whether maintainer and nixpkgs path are set"""
     if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
+        # only load arch from database (if it exists)
+        nix_cbm.load_arch_from_db()
         return True
     # not set, so try loading from database
     nix_cbm.check_for_database()
@@ -83,7 +85,7 @@ def check_build(
     if task == "check":
         job = q.enqueue(
             nix_cbm.refresh_build_status,
-            arch="x86_64-linux",
+            arch=Config.ARCH_TO_CHECK,
             maintainer=Config.MAINTAINER,
         )
     elif task == "maintainer":
@@ -91,7 +93,7 @@ def check_build(
             job = q.enqueue(
                 nix_cbm.refresh_build_status,
                 reload_maintainer=True,
-                arch="x86_64-linux",
+                arch=Config.ARCH_TO_CHECK,
                 maintainer=Config.MAINTAINER,
             )
     else:
@@ -118,27 +120,40 @@ def job_status(job_id: str) -> wrappers.Response:
 @app.route("/settings", methods=["GET", "POST"])
 def settings() -> Union[str, Response]:
     """Change settings and save to the database"""
+    # run the config routine to restore any saved values
+    config_is_set()
+    arch = Config.ARCH_TO_CHECK
     if request.method == "POST":
         if request.form.get("button") == "Save settings":
             maintainer = input_sanitizer(
                 str(request.form.get("maintainer_textbox")), "maintainer"
             )
             path = input_sanitizer(str(request.form.get("path_textbox")), "path")
+            arch_from_form = request.form.getlist("arch_choice")
             if maintainer:
                 Config.MAINTAINER = maintainer
                 nix_cbm.save_maintainer_to_db(maintainer)
             if path:
                 Config.NIXPKGS_ORIGINAL = path
                 nix_cbm.save_nixpkgs_to_db(path)
+            if len(arch_from_form) > 0:
+                Config.ARCH_TO_CHECK = arch_from_form
+                nix_cbm.save_arch_to_db(Config.ARCH_TO_CHECK)
             if maintainer and path:
                 return redirect("/", 302)
             return render_template(
                 "settings.html",
                 maintainer=Config.MAINTAINER,
                 path=Config.NIXPKGS_ORIGINAL,
+                arch_list=Config.SUPPORTED_ARCHS,
+                selected_archs=arch,
             )
     return render_template(
-        "settings.html", maintainer=Config.MAINTAINER, path=Config.NIXPKGS_ORIGINAL
+        "settings.html",
+        maintainer=Config.MAINTAINER,
+        path=Config.NIXPKGS_ORIGINAL,
+        arch_list=Config.SUPPORTED_ARCHS,
+        selected_archs=arch,
     )
 
 
@@ -148,54 +163,13 @@ def failed() -> Union[str, Response]:
     if not config_is_set():
         return redirect("/settings", code=302)
     packages = get_packages(failed=True)
-    if request.method == "POST":
-        # TODO: delegate to worker
-        if request.form.get("button1") == "Update hydra-build":
-            for arch in Config.ARCH_TO_CHECK:
-                nix_cbm.refresh_build_status(arch=arch)
-            packages = get_packages(failed=True)
-            return render_template(
-                "failed.html",
-                maintainer=Config.MAINTAINER,
-                packages=packages,
-            )
-        if request.form.get("button2") == "Update maintained packages":
-            for arch in Config.ARCH_TO_CHECK:
-                nix_cbm.refresh_build_status(reload_maintainer=True, arch=arch)
-            packages = get_packages(failed=True)
-            return render_template(
-                "failed.html",
-                maintainer=Config.MAINTAINER,
-                packages=packages,
-            )
     return render_template("failed.html", maintainer=Config.MAINTAINER, packages=packages)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index() -> Union[str, Response]:
-    # TODO: this needs to be offloaded to a different worker
     # check for set maintainer and nixpkgs path first
     if not config_is_set():
         return redirect("/settings", code=302)
     packages = get_packages()
-    if request.method == "POST":
-        # TODO: delegate to worker
-        if request.form.get("button1") == "Update hydra-build":
-            for arch in Config.ARCH_TO_CHECK:
-                nix_cbm.refresh_build_status(arch=arch)
-            packages = get_packages()
-            return render_template(
-                "index.html",
-                maintainer=Config.MAINTAINER,
-                packages=packages,
-            )
-        if request.form.get("button2") == "Update maintained packages":
-            for arch in Config.ARCH_TO_CHECK:
-                nix_cbm.refresh_build_status(reload_maintainer=True, arch=arch)
-            packages = get_packages()
-            return render_template(
-                "index.html",
-                maintainer=Config.MAINTAINER,
-                packages=packages,
-            )
     return render_template("index.html", maintainer=Config.MAINTAINER, packages=packages)

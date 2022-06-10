@@ -201,36 +201,6 @@ class FrontendTestCase(unittest.TestCase):
             assert b"Packages maintained by test_maintainer" in response.data
             assert b"Nix Check Build Merge on GitHub" in response.data
 
-    @mock.patch("nix_cbm.refresh_build_status")
-    def test_main_page_button1(self, refresh_build):
-        with nix_cbm.frontend.app.test_client() as test_client:
-            response = test_client.post(
-                "/",
-                data={
-                    "button1": "Update hydra-build",
-                },
-            )
-            assert response.status_code == 200
-            refresh_build.assert_called_with(arch="x86_64-linux")
-            assert b"Nix Check Build Merge" in response.data
-            assert b"Packages maintained by test_maintainer" in response.data
-            assert b"Nix Check Build Merge on GitHub" in response.data
-
-    @mock.patch("nix_cbm.refresh_build_status")
-    def test_main_page_button2(self, refresh_build):
-        with nix_cbm.frontend.app.test_client() as test_client:
-            response = test_client.post(
-                "/",
-                data={
-                    "button2": "Update maintained packages",
-                },
-            )
-            assert response.status_code == 200
-            refresh_build.assert_called_with(reload_maintainer=True, arch="x86_64-linux")
-            assert b"Nix Check Build Merge" in response.data
-            assert b"Packages maintained by test_maintainer" in response.data
-            assert b"Nix Check Build Merge on GitHub" in response.data
-
     def test_failed_page(self):
         # Create a test client using the Flask application configured for testing
         with nix_cbm.frontend.app.test_client() as test_client:
@@ -250,36 +220,6 @@ class FrontendTestCase(unittest.TestCase):
             response = test_client.get("/failed")
             assert response.status_code == 302
             mock_config_is_set.assert_called_once()
-
-    @mock.patch("nix_cbm.refresh_build_status")
-    def test_failed_page_button1(self, refresh_build):
-        with nix_cbm.frontend.app.test_client() as test_client:
-            response = test_client.post(
-                "/failed",
-                data={
-                    "button1": "Update hydra-build",
-                },
-            )
-            assert response.status_code == 200
-            refresh_build.assert_called_with(arch="x86_64-linux")
-            assert b"Nix Check Build Merge" in response.data
-            assert b"Built failures from packages maintained by" in response.data
-            assert b"Nix Check Build Merge on GitHub" in response.data
-
-    @mock.patch("nix_cbm.refresh_build_status")
-    def test_failed_page_button2(self, refresh_build):
-        with nix_cbm.frontend.app.test_client() as test_client:
-            response = test_client.post(
-                "/failed",
-                data={
-                    "button2": "Update maintained packages",
-                },
-            )
-            assert response.status_code == 200
-            refresh_build.assert_called_with(reload_maintainer=True, arch="x86_64-linux")
-            assert b"Nix Check Build Merge" in response.data
-            assert b"Built failures from packages maintained by" in response.data
-            assert b"Nix Check Build Merge on GitHub" in response.data
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir", return_value=True)
     def test_settings_page(self, check_nixpkgs_dir):

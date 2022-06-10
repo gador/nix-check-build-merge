@@ -35,12 +35,15 @@ class ModelTestCase(unittest.TestCase):
 
         assert repr(db_entry) == f"<Package {cs}>"
 
-    @given(st.characters(), st.characters())
-    def test_config_repr(self, cs, path):
-        db_entry = models.PersistentConfig(maintainer=cs, nixpkgs_path=path)
+    @given(st.characters(), st.characters(), st.characters())
+    def test_config_repr(self, cs, path, arch):
+        db_entry = models.PersistentConfig(
+            maintainer=cs, nixpkgs_path=path, archs_to_check=arch
+        )
         assert db_entry.maintainer == cs
         assert db_entry.nixpkgs_path == path
-        assert repr(db_entry) == f"<Maintainer {cs}, Path {path}>"
+        assert db_entry.archs_to_check == arch
+        assert repr(db_entry) == f"<Maintainer {cs}, Path {path}, Archs {arch}>"
 
 
 if __name__ == "__main__":

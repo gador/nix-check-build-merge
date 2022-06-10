@@ -113,6 +113,33 @@ def save_nixpkgs_to_db(nixpkgs: str) -> None:
         frontend.db.session.commit()
 
 
+def save_arch_to_db(arch: list[str]) -> None:
+    if arch:
+        # convert from list to string
+        comma_seperated_arch = ",".join(arch)
+        result = models.PersistentConfig.query.filter_by(id=0).first()
+        if not result:
+            # new db entry
+            db_entry = models.PersistentConfig(
+                id=0,
+                archs_to_check=comma_seperated_arch,
+            )
+            frontend.db.session.add(db_entry)
+        else:
+            result.archs_to_check = comma_seperated_arch
+        frontend.db.session.commit()
+
+
+def load_arch_from_db() -> None:
+    """load arch_to_check path from db.
+    Will override any existing values
+    """
+    result = models.PersistentConfig.query.filter_by(id=0).first()
+    if result and result.archs_to_check:
+        # read comma separated config and return list
+        Config.ARCH_TO_CHECK = str(result.archs_to_check).split(",")
+
+
 def restore_or_save_config() -> None:
     """Restores config, if available.
     Saves config values if already present"""
@@ -124,6 +151,9 @@ def restore_or_save_config() -> None:
         load_nixpkgs_from_db()
     else:
         save_nixpkgs_to_db(Config.NIXPKGS_ORIGINAL)
+    # archs have a default value, so we don't need to check its existence
+    # loads the architecture, if it exists
+    load_arch_from_db()
 
 
 class InsertOrUpdate:
@@ -183,7 +213,7 @@ class InsertOrUpdate:
 
 def refresh_build_status(
     reload_maintainer: bool = False,
-    arch: str = "x86_64-linux",
+    arch: list[str] = ["x86_64-linux"],
     maintainer: str = Config.MAINTAINER,
 ) -> str:
     """
@@ -200,12 +230,14 @@ def refresh_build_status(
         nixcbm.update_maintained_packages_list(maintainer)
         nixcbm.save_maintained_packages_to_db()
     nixcbm.load_maintained_packages_from_database()
-    nixcbm.check_hydra_status(nixcbm.maintained_packages, arch=arch)
+    for a in arch:
+        nixcbm.check_hydra_status(nixcbm.maintained_packages, arch=a)
 
     for package, hydra_output in nixcbm.hydra_build_status.items():
         result = _get_build_status_from_json(hydra_output[package])
-        insert_or_update = InsertOrUpdate(package, hydra_output, result, arch)
-        insert_or_update.insert_or_update()
+        for a in arch:
+            insert_or_update = InsertOrUpdate(package, hydra_output, result, arch=a)
+            insert_or_update.insert_or_update()
     if reload_maintainer:
         return f"Refresh for maintained packages by {maintainer} successful"
     else:
