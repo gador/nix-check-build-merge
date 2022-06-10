@@ -44,3 +44,4 @@ dist/
 _pgbackup
 _pginfo
 pinegrow.json
+node_modules

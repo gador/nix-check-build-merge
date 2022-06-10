@@ -3,21 +3,46 @@
 <main>
     <h1>Nix Check Build Merge</h1>
     <p class="fs-5 col-md-8">Settings for Nix Check Build Merge</p>
-    <div class="mb-5">
+    <div class="container mb-5">
         <form method="post" action="/settings">
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="inputGroup-sizing-default">Maintainer:</span>
-                <input type="text" class="form-control" aria-label="Maintainer" aria-describedby="inputGroup-sizing-default" name="maintainer_textbox" value="{{ maintainer }}"/>
-                <span class="input-group-text" id="inputGroup-sizing-default">Nixpkgs path:</span>
-                <input type="text" class="form-control" aria-label="Path" aria-describedby="inputGroup-sizing-default" name="path_textbox" value="{{ path }}"/>
-                <input type="submit" value="Save settings" name="button" class="btn btn-primary"/>
+            <div class="input-group mb-2">
+                <span class="input-group-text col-3" id="inputGroup-sizing-default">Maintainer:</span>
+                <input
+                    type="text"
+                    class="form-control"
+                    aria-label="Maintainer"
+                    aria-describedby="inputGroup-sizing-default"
+                    name="maintainer_textbox"
+                    value="gador"
+                >
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text col-3" id="inputGroup-sizing-default">Nixpkgs path:</span>
+                <input
+                    type="text"
+                    class="form-control"
+                    aria-label="Path"
+                    aria-describedby="inputGroup-sizing-default"
+                    name="path_textbox"
+                    value="/home/wogan/software/git/nixpkgs"
+                >
+            </div>
+            <div class="input-group mb-2">
+                <label class="input-group-text col-3" for="inputGroupSelect01">Architecture</label>
+                <select class="form-select" multiple id="inputGroupSelect01">
+                    <option value="x86_64-linux">x86_64-linux</option>
+                    <option value="aarch64-linux">aarch64-linux</option>
+                </select>
+            </div>
+            <div class="input-group mb-2">
+                <input
+                    type="submit"
+                    value="Save settings"
+                    name="button"
+                    class="btn btn-primary"
+                >
             </div>
         </form>
     </div>
 </main>
 {% endblock %}
-
-
-
-
-
