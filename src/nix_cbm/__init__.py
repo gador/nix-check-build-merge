@@ -22,9 +22,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 logging.basicConfig(level=logging.DEBUG)
 
 
-def preflight(nixpkgs_path: str) -> bool:
+def preflight() -> bool:
     """
     Check if all running conditions are met.
+    Load settings from database and check, if they are valid.
     This is the only function to interact with the
     local nixpkgs repo. From now on, we'll work
     with the workdir.
@@ -38,15 +39,17 @@ def preflight(nixpkgs_path: str) -> bool:
         raise LookupError(
             f"The following programs are missing: + ${str(missing_programs)}"
         )
-    if not checks.check_nixpkgs_dir(nixpkgs_path):
-        raise NotADirectoryError(
-            f"The following path doesn't seem to be a nixpks directory: {str(nixpkgs_path)}"
-        )
-    git.git_worktree(repo=nixpkgs_path, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
-    git.git_pull(repo=Config.NIXPKGS_WORKDIR)
     check_for_database()
-    # Make sure Maintainer and nixpkgs path is saved to db and updated if changed
     restore_or_save_config()
+    if not checks.check_nixpkgs_dir(Config.NIXPKGS_ORIGINAL):
+        logging.error(
+            f"The following path doesn't seem to be a nixpkgs repo {Config.NIXPKGS_ORIGINAL}"
+        )
+        return False
+    git.git_worktree(repo=Config.NIXPKGS_ORIGINAL, nixpkgs_dir=Config.NIXPKGS_WORKDIR)
+    git.git_pull(repo=Config.NIXPKGS_WORKDIR)
+    # Make sure Maintainer and nixpkgs path is saved to db and updated if changed
+    # restore_or_save_config()
     Config.PREFLIGHT_DONE = True
     return True
 
@@ -278,7 +281,7 @@ def cli(nixpkgs: str, maintainer: str, action: str) -> None:
         raise LookupError("Please provide a maintainer")
     if not Config.MAINTAINER:
         Config.MAINTAINER = maintainer
-    preflight(Config.NIXPKGS_ORIGINAL)
+    preflight()
     if action == "update":
         refresh_build_status()
     elif action == "frontend":
