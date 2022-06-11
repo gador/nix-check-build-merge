@@ -98,6 +98,12 @@
             pkgs.hydra-check
             pkgs.redis
             pathvalidate
+
+            # support programs
+            pkgs.git
+            pkgs.ripgrep
+            pkgs.hydra-check
+
           ];
           patches = [
             (pkgs.substituteAll {
@@ -114,7 +120,17 @@
           preCheck = ''
             export HOME=$TMPDIR
           '';
-          checkInputs = with pkgs.python310Packages; [ pytestCheckHook hypothesis fakeredis];
+          checkInputs = with pkgs.python310Packages; [
+            pytestCheckHook
+            hypothesis
+            fakeredis
+
+            # we test for these tools, so they need to be present
+            pkgs.ripgrep
+            pkgs.git
+            pkgs.hydra-check
+            pkgs.nix
+          ];
           postInstall = ''
             substituteInPlace supervisord.conf --replace "nixcbm worker" "$out/bin/nixcbm worker"
             install -Dm 0644 supervisord.conf $out/etc/supervisord.conf
@@ -163,6 +179,12 @@
                 coveralls
                 pathvalidate
                 fakeredis
+
+                # we test for these tools, so they need to be present
+                pkgs.ripgrep
+                pkgs.git
+                pkgs.hydra-check
+                pkgs.nix
               ];
             } ''
             mkdir $out

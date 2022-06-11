@@ -16,7 +16,7 @@ class FrontendTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
         nix_cbm.Config.MAINTAINER = "test_maintainer"
-        nix_cbm.Config.NIXPKGS_ORIGINAL = "/nixpkgs"
+        nix_cbm.Config.NIXPKGS_ORIGINAL = "~/nixpkgs"
         nix_cbm.Config.NIXPKGS_WORKDIR = "/"
         nix_cbm.Config.TESTING = True
         self.setup_db()
@@ -59,24 +59,9 @@ class FrontendTestCase(unittest.TestCase):
 
     def test_init_app(self):
         assert nix_cbm.Config.PREFLIGHT_DONE == False
-        self.assertIsNone(nix_cbm.frontend.init_app())
+        self.assertTrue(nix_cbm.frontend.init_app())
         # should stay false, since we return early, due to TESTING == True
         assert nix_cbm.Config.PREFLIGHT_DONE == False
-
-    @mock.patch("nix_cbm.check_for_database")
-    def test_config_is_set(self, check_db):
-        self.assertTrue(nix_cbm.frontend.config_is_set())
-        check_db.assert_not_called()
-        nix_cbm.Config.MAINTAINER = ""
-        self.assertFalse(nix_cbm.frontend.config_is_set())
-        check_db.assert_called_once()
-
-        # test loading from database
-        nix_cbm.save_maintainer_to_db("test_maintainer")
-        nix_cbm.save_nixpkgs_to_db("/nixpkgs")
-        self.assertTrue(nix_cbm.frontend.config_is_set())
-        self.assertEqual(nix_cbm.Config.MAINTAINER, "test_maintainer")
-        self.assertEqual(nix_cbm.Config.NIXPKGS_ORIGINAL, "/nixpkgs")
 
     def test_get_packages(self):
         with mock.patch("flask_sqlalchemy._QueryProperty.__get__") as queryMOCK:
@@ -188,6 +173,7 @@ class FrontendTestCase(unittest.TestCase):
         # Create a test client using the Flask application configured for testing
         nix_cbm.Config.MAINTAINER = ""
         nix_cbm.Config.NIXPKGS_ORIGINAL = ""
+        nix_cbm.Config.TESTING = False
         with nix_cbm.frontend.app.test_client() as test_client:
             response = test_client.get("/")
             assert response.status_code == 302
@@ -214,12 +200,14 @@ class FrontendTestCase(unittest.TestCase):
             assert response.status_code == 405
             assert b"Not Allowed" in response.data
 
-    @mock.patch("nix_cbm.frontend.config_is_set", return_value=False)
-    def test_failed_page_redirect(self, mock_config_is_set):
+    @mock.patch("nix_cbm.check_for_database")
+    def test_failed_page_redirect(self, check_db):
+        # setting this to False to get the actual (False) result of init_app()
+        nix_cbm.Config.TESTING = False
         with nix_cbm.frontend.app.test_client() as test_client:
             response = test_client.get("/failed")
             assert response.status_code == 302
-            mock_config_is_set.assert_called_once()
+            check_db.assert_called_once()
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir", return_value=True)
     def test_settings_page(self, check_nixpkgs_dir):
@@ -256,7 +244,7 @@ class FrontendTestCase(unittest.TestCase):
             )
             assert response.status_code == 200
             self.assertEqual(nix_cbm.Config.MAINTAINER, "new_maintainer")
-            self.assertEqual(nix_cbm.Config.NIXPKGS_ORIGINAL, "/nixpkgs")
+            self.assertEqual(nix_cbm.Config.NIXPKGS_ORIGINAL, "~/nixpkgs")
             assert b"Settings for Nix Check Build Merge" in response.data
 
 

@@ -17,25 +17,11 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-def init_app() -> None:
-    """makes sure preflight ran"""
+def init_app() -> bool:
+    """makes sure preflight ran. Returns True for done, False for an error during init"""
     if not Config.PREFLIGHT_DONE:
-        nix_cbm.preflight(Config.NIXPKGS_ORIGINAL)
-
-
-def config_is_set() -> bool:
-    """Check, whether maintainer and nixpkgs path are set"""
-    if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
-        # only load arch from database (if it exists)
-        nix_cbm.load_arch_from_db()
-        return True
-    # not set, so try loading from database
-    nix_cbm.check_for_database()
-    nix_cbm.restore_or_save_config()
-    # now, try again
-    if Config.MAINTAINER and Config.NIXPKGS_ORIGINAL:
-        return True
-    return False
+        return nix_cbm.preflight()
+    return True
 
 
 def get_packages(failed: bool = False) -> Tuple:
@@ -121,7 +107,7 @@ def job_status(job_id: str) -> wrappers.Response:
 def settings() -> Union[str, Response]:
     """Change settings and save to the database"""
     # run the config routine to restore any saved values
-    config_is_set()
+    init_app()
     arch = Config.ARCH_TO_CHECK
     if request.method == "POST":
         if request.form.get("button") == "Save settings":
@@ -160,7 +146,7 @@ def settings() -> Union[str, Response]:
 @app.route("/failed", methods=["GET", "POST"])
 def failed() -> Union[str, Response]:
     # check for set maintainer and nixpkgs path first
-    if not config_is_set():
+    if not init_app():
         return redirect("/settings", code=302)
     packages = get_packages(failed=True)
     return render_template("failed.html", maintainer=Config.MAINTAINER, packages=packages)
@@ -169,7 +155,7 @@ def failed() -> Union[str, Response]:
 @app.route("/", methods=["GET", "POST"])
 def index() -> Union[str, Response]:
     # check for set maintainer and nixpkgs path first
-    if not config_is_set():
+    if not init_app():
         return redirect("/settings", code=302)
     packages = get_packages()
     return render_template("index.html", maintainer=Config.MAINTAINER, packages=packages)

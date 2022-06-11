@@ -204,9 +204,10 @@ class MyTestCase(unittest.TestCase):
         with nix_cbm.frontend.app.app_context():
             nix_cbm.frontend.db.drop_all()
 
+    @mock.patch("nix_cbm.check_for_database")
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir", return_value=False)
     @mock.patch("nix_cbm.checks.check_tools", return_value=[])
-    def test_preflight_wrong_nixpkgs(self, check_tools, nixpkgs_dir):
+    def test_preflight_wrong_nixpkgs(self, check_tools, nixpkgs_dir, check_db):
         """test_preflight with wrong nixpkgs dir
 
         this will test the preflight call and mock all other function
@@ -221,9 +222,10 @@ class MyTestCase(unittest.TestCase):
         """
         self.setup_config()
         self.setup_db()
-        self.assertRaises(NotADirectoryError, nix_cbm.preflight, "/")
+        self.assertFalse(nix_cbm.preflight())
         check_tools.assert_called_once()
         nixpkgs_dir.assert_called_once()
+        check_db.assert_called_once()
         self.tear_down()
 
     @mock.patch("nix_cbm.checks.check_nixpkgs_dir")
@@ -252,11 +254,12 @@ class MyTestCase(unittest.TestCase):
         """
         self.setup_config()
         self.setup_db()
-        self.assertTrue(nix_cbm.preflight("/"))
-        nixpkgs_dir.assert_called_with("/")
+        self.assertTrue(nix_cbm.preflight())
+        nixpkgs_dir.assert_called_with(nix_cbm.Config.NIXPKGS_ORIGINAL)
         check_tools.assert_called_once()
         git_worktree.assert_called_with(
-            repo="/", nixpkgs_dir=nix_cbm.Config.NIXPKGS_WORKDIR
+            repo=nix_cbm.Config.NIXPKGS_ORIGINAL,
+            nixpkgs_dir=nix_cbm.Config.NIXPKGS_WORKDIR,
         )
         git_worktree.assert_called_once()
         git_pull.assert_called_with(repo=nix_cbm.Config.NIXPKGS_WORKDIR)
@@ -271,7 +274,7 @@ class MyTestCase(unittest.TestCase):
     @mock.patch("nix_cbm.checks.check_tools", return_value=["missing_program"])
     def test_preflight_missing_programs(self, check_tools):
         """test_preflight_missing_programs test the LookupError for missing programs"""
-        self.assertRaises(LookupError, nix_cbm.preflight, "nixpkgs_path")
+        self.assertRaises(LookupError, nix_cbm.preflight)
         check_tools.assert_called_once()
 
     def test_get_build_stats(self):
