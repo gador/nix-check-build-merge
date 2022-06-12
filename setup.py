@@ -3,9 +3,12 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+with open('VERSION', "r", encoding="utf-8") as version_file:
+    version = version_file.read().strip()
+
 setuptools.setup(
     name="nix-check-build-merge",
-    version="0.3.0",
+    version=version,
     author="Florian Brandes",
     author_email="florian.brandes@posteo.de",
     description="This project will allow you to check for build failures all the nixpkgs you maintain",

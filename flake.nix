@@ -81,7 +81,7 @@
         };
         package = pkgs.python310Packages.buildPythonApplication rec {
           pname = "nix-check-build-merge";
-          version = "0.3.0";
+          version = "0.3.1";
           src = ./.;
 
           propagatedBuildInputs = with pkgs.python310Packages; [
@@ -119,6 +119,8 @@
           ];
           preCheck = ''
             export HOME=$TMPDIR
+            # make sure the version is correct (important when building from source and not from package)
+            [ $(cat VERSION) = ${version} ]  || exit 1
           '';
           checkInputs = with pkgs.python310Packages; [
             pytestCheckHook
@@ -137,13 +139,21 @@
             substituteInPlace nixcbm_start.sh --replace "supervisord.conf" "$out/etc/supervisord.conf"
             install -Dm 0755 nixcbm_start.sh $out/bin/nixxcbm_start 
           '';
+
+          meta = with pkgs.lib; {
+            description = "Allows you to check for build failures all the nixpkgs you maintain";
+            homepage = "https://github.com/gador/nix-check-build-merge";
+            license = licenses.mit;
+            maintainers = with maintainers; [ gador ];
+            mainProgram = "nixcbm_start";
+          };
         };
       in
       rec {
         packages.default = package;
         apps.default = {
           type = "app";
-          program = "${package}/bin/nixcbm";
+          program = "${package}/bin/nixcbm_start";
         };
         devShells.default = devEnv;
         # use nix flake check -L to print more test info
