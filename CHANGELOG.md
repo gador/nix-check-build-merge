@@ -1,4 +1,13 @@
-#### [Version 0.3.0](https://gador/nix-check-build-merge/releases/tag/0.3.0) 
+#### [Version 0.3.1](https://gador/nix-check-build-merge/releases/tag/0.3.1) 
+### Other Changes 
+- minor cleanup, add frontend choice for architecture [#60](https://gador/nix-check-build-merge/issues/#60) ([@gador](https://github.com/@gador))
+- add functionality to arch select in frontend [#61](https://gador/nix-check-build-merge/issues/#61) ([@gador](https://github.com/@gador))
+- improve frontend navigation [#62](https://gador/nix-check-build-merge/issues/#62) ([@gador](https://github.com/@gador))
+- refactor preflight and init_app [#63](https://gador/nix-check-build-merge/issues/#63) ([@gador](https://github.com/@gador))
+- update flake.lock [#64](https://gador/nix-check-build-merge/issues/#64) ([@gador](https://github.com/@gador))
+- single source for VERSION tag [#65](https://gador/nix-check-build-merge/issues/#65) ([@gador](https://github.com/@gador))
+ 
+ #### [Version 0.3.0](https://gador/nix-check-build-merge/releases/tag/0.3.0) 
 ### Implemented Enhancements 
 - Add asynchronous  frontend [#56](https://gador/nix-check-build-merge/issues/#56) ([@gador](https://github.com/@gador))
 ### Other Changes 
